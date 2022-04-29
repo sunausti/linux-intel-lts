@@ -112,6 +112,10 @@
 #define MDIO_AN_T1_LP_M                518     /* BASE-T1 AN LP Base Page ability register [31:16] */
 #define MDIO_AN_T1_LP_H                519     /* BASE-T1 AN LP Base Page ability register [47:32] */
 
+#define MDIO_B10L_PMA_CTRL     2294    /* 10BASE-T1L PMA control */
+#define MDIO_PMA_10T1L_STAT    2295    /* 10BASE-T1L PMA status */
+#define MDIO_PCS_10T1L_CTRL    2278    /* 10BASE-T1L PCS control */
+
 /* LASI (Link Alarm Status Interrupt) registers, defined by XENPAK MSA. */
 #define MDIO_PMA_LASI_RXCTRL	0x9000	/* RX_ALARM control */
 #define MDIO_PMA_LASI_TXCTRL	0x9001	/* TX_ALARM control */
@@ -338,6 +342,28 @@
 
 /* BASE-T1 PMA/PMD extended ability register. */
 #define MDIO_PMA_PMD_BT1_B10L_ABLE	0x0004	/* 10BASE-T1L Ability */
+
+/* 10BASE-T1L PMA control */
+#define MDIO_PMA_10T1L_CTRL_LB_EN      0x0001  /* Enable loopback mode */
+#define MDIO_PMA_10T1L_CTRL_EEE_EN     0x0400  /* Enable EEE mode */
+#define MDIO_PMA_10T1L_CTRL_LOW_POWER  0x0800  /* Low-power mode */
+#define MDIO_PMA_10T1L_CTRL_2V4_EN     0x1000  /* Enable 2.4 Vpp operating mode */
+#define MDIO_PMA_10T1L_CTRL_TX_DIS     0x4000  /* Transmit disable */
+#define MDIO_PMA_10T1L_CTRL_PMA_RST    0x8000  /* MA reset */
+
+/* 10BASE-T1L PMA status register. */
+#define MDIO_PMA_10T1L_STAT_LINK       0x0001  /* PMA receive link up */
+#define MDIO_PMA_10T1L_STAT_FAULT      0x0002  /* Fault condition detected */
+#define MDIO_PMA_10T1L_STAT_POLARITY   0x0004  /* Receive polarity is reversed */
+#define MDIO_PMA_10T1L_STAT_RECV_FAULT 0x0200  /* Able to detect fault on receive path */
+#define MDIO_PMA_10T1L_STAT_EEE                0x0400  /* PHY has EEE ability */
+#define MDIO_PMA_10T1L_STAT_LOW_POWER  0x0800  /* PMA has low-power ability */
+#define MDIO_PMA_10T1L_STAT_2V4_ABLE   0x1000  /* PHY has 2.4 Vpp operating mode ability */
+#define MDIO_PMA_10T1L_STAT_LB_ABLE    0x2000  /* PHY has loopback ability */
+
+/* 10BASE-T1L PCS control register. */
+#define MDIO_PCS_10T1L_CTRL_LB         0x4000  /* Enable PCS level loopback mode */
+#define MDIO_PCS_10T1L_CTRL_RESET      0x8000  /* PCS reset */
 
 /* BASE-T1 auto-negotiation advertisement register [15:0] */
 #define MDIO_AN_T1_ADV_L_PAUSE_CAP	ADVERTISE_PAUSE_CAP
