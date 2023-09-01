@@ -5916,7 +5916,13 @@ static vm_fault_t hugetlb_no_page(struct mm_struct *mm,
 				ret = 0;
 			goto out;
 		}
-		clear_huge_page(page, address, pages_per_huge_page(h));
+		/*
+		 * Hack for ACRN Service VM kernel:
+		 * In order to optimize the cold boot time of ACRN VM,
+		 * No need to clear huge page for security concern here.
+		 * Because in this scenario just have ACRN Device module use it.
+		 * clear_huge_page(page, address, pages_per_huge_page(h));
+		 */
 		__SetPageUptodate(page);
 		new_page = true;
 
