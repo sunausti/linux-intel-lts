@@ -743,6 +743,8 @@ static u32 adlp_tc_phy_hpd_live_status(struct intel_tc_port *tc)
 	u32 pch_isr;
 	u32 mask = 0;
 
+	struct gpio_desc *gpio = i915->display.hotplug.stats[hpd_pin].gpio.gpiod;
+
 	with_intel_display_power(i915, POWER_DOMAIN_DISPLAY_CORE, wakeref) {
 		cpu_isr = intel_de_read(i915, GEN11_DE_HPD_ISR);
 		pch_isr = intel_de_read(i915, SDEISR);
@@ -754,6 +756,9 @@ static u32 adlp_tc_phy_hpd_live_status(struct intel_tc_port *tc)
 		mask |= BIT(TC_PORT_TBT_ALT);
 
 	if (pch_isr & pch_isr_bit)
+		mask |= BIT(TC_PORT_LEGACY);
+
+	if (gpio && (i915->display.hotplug.gpio_pch_isr & pch_isr_bit))
 		mask |= BIT(TC_PORT_LEGACY);
 
 	return mask;

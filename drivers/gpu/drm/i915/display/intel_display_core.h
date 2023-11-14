@@ -146,6 +146,16 @@ struct intel_frontbuffer_tracking {
 	unsigned flip_bits;
 };
 
+struct hpd_gpio {
+	enum hpd_pin pin;
+	struct gpio_desc *gpiod;
+	int irq;
+	u32 pch_isr;
+	u64 timestamp_ns;
+	struct hrtimer timer;
+	struct drm_i915_private *i915;
+};
+
 struct intel_hotplug {
 	struct delayed_work hotplug_work;
 
@@ -159,7 +169,10 @@ struct intel_hotplug {
 			HPD_DISABLED = 1,
 			HPD_MARK_DISABLED = 2
 		} state;
+		struct hpd_gpio gpio;
 	} stats[HPD_NUM_PINS];
+	u32 gpio_pch_isr;
+	u32 gpio_hpd_count;
 	u32 event_bits;
 	u32 retry_bits;
 	struct delayed_work reenable_work;
