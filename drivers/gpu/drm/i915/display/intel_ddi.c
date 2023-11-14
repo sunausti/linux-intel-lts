@@ -4460,6 +4460,12 @@ static bool lpt_digital_port_connected(struct intel_encoder *encoder)
 {
 	struct drm_i915_private *dev_priv = to_i915(encoder->base.dev);
 	u32 bit = dev_priv->display.hotplug.pch_hpd[encoder->hpd_pin];
+	enum hpd_pin pin = encoder->hpd_pin;
+
+	struct gpio_desc *gpio = dev_priv->display.hotplug.stats[pin].gpio.gpiod;
+
+	if (gpio)
+		return dev_priv->display.hotplug.gpio_pch_isr & bit;
 
 	return intel_de_read(dev_priv, SDEISR) & bit;
 }

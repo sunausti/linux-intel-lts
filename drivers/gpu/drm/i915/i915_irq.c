@@ -1563,6 +1563,8 @@ void intel_irq_uninstall(struct drm_i915_private *dev_priv)
 
 	free_irq(irq, dev_priv);
 
+	intel_acpi_hpd_gpio_unregister(dev_priv);
+
 	intel_hpd_cancel_work(dev_priv);
 	dev_priv->runtime_pm.irqs_enabled = false;
 }

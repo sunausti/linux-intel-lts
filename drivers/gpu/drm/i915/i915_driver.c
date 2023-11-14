@@ -844,6 +844,8 @@ int i915_driver_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 	if (ret)
 		goto out_cleanup_modeset;
 
+	intel_acpi_hpd_gpio_register(i915);
+
 	ret = intel_display_driver_probe_nogem(i915);
 	if (ret)
 		goto out_cleanup_irq;
