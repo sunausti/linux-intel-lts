@@ -621,7 +621,7 @@ static int phylink_validate_mac_and_pcs(struct phylink *pl,
 		/* Validate the link parameters with the PCS */
 		if (pcs->ops->pcs_validate) {
 			ret = pcs->ops->pcs_validate(pcs, supported, state);
-			if (ret < 0 || phylink_is_empty_linkmode(supported))
+			if (ret < 0) //|| phylink_is_empty_linkmode(supported))
 				return -EINVAL;
 
 			/* Ensure the advertising mask is a subset of the
@@ -635,7 +635,7 @@ static int phylink_validate_mac_and_pcs(struct phylink *pl,
 	/* Then validate the link parameters with the MAC */
 	pl->mac_ops->validate(pl->config, supported, state);
 
-	return phylink_is_empty_linkmode(supported) ? -EINVAL : 0;
+	return 0;// phylink_is_empty_linkmode(supported) ? -EINVAL : 0;
 }
 
 static int phylink_validate_mask(struct phylink *pl, unsigned long *supported,
@@ -1647,6 +1647,7 @@ static int phylink_bringup_phy(struct phylink *pl, struct phy_device *phy,
 	if (phy->is_c45 && config.rate_matching == RATE_MATCH_NONE &&
 	    interface != PHY_INTERFACE_MODE_RXAUI &&
 	    interface != PHY_INTERFACE_MODE_XAUI &&
+	    interface != PHY_INTERFACE_MODE_2500BASEX &&
 	    interface != PHY_INTERFACE_MODE_USXGMII)
 		config.interface = PHY_INTERFACE_MODE_NA;
 	else

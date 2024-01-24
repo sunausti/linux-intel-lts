@@ -342,6 +342,7 @@
 
 /* BASE-T1 PMA/PMD extended ability register. */
 #define MDIO_PMA_PMD_BT1_B10L_ABLE	0x0004	/* 10BASE-T1L Ability */
+#define MDIO_PMA_PMD_BT1_B2500_ABLE	0x0010	/* 2500BASE-T1 Ability */
 
 /* 10BASE-T1L PMA control */
 #define MDIO_PMA_10T1L_CTRL_LB_EN      0x0001  /* Enable loopback mode */
