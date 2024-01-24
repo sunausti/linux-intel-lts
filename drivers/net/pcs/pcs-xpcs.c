@@ -91,6 +91,7 @@ static const int xpcs_2500basex_features[] = {
 	ETHTOOL_LINK_MODE_Autoneg_BIT,
 	ETHTOOL_LINK_MODE_2500baseX_Full_BIT,
 	ETHTOOL_LINK_MODE_2500baseT_Full_BIT,
+	ETHTOOL_LINK_MODE_2500baseT1_Full_BIT,
 	__ETHTOOL_LINK_MODE_MASK_NBITS,
 };
 

@@ -146,6 +146,12 @@ config BCM87XX_PHY
 	help
 	  Currently supports the BCM8706 and BCM8727 10G Ethernet PHYs.
 
+config BCM89890x_PHY
+	tristate "Broadcom BCM89890x PHY"
+	help
+	  Support for the Broadcom BCM89890x 10GBASE-T1 Automotive Ethernet
+	  PHY.
+
 config BCM_CYGNUS_PHY
 	tristate "Broadcom Cygnus/Omega SoC internal PHY"
 	depends on ARCH_BCM_IPROC || COMPILE_TEST
