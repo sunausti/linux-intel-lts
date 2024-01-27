@@ -19,6 +19,25 @@
 #define RT5640_CODEC_DAI		"rt5640-aif1"
 #define AVS_ADI_POC			0
 
+static int rt5640_board_get(struct snd_kcontrol *kcontrol,
+			    struct snd_ctl_elem_value *ucontrol)
+{
+	ucontrol->value.integer.value[0] = 1;
+
+	return 0;
+}
+
+static const struct snd_kcontrol_new card_controls[] = {
+	{
+		.iface  = SNDRV_CTL_ELEM_IFACE_MIXER,
+		.name   = "RT5640 board",
+		.access = SNDRV_CTL_ELEM_ACCESS_READ,
+		.info   = snd_ctl_boolean_mono_info,
+		.get    = rt5640_board_get,
+		.put    = NULL,
+	},
+};
+
 static const struct snd_soc_dapm_widget card_widgets[] = {
 	SND_SOC_DAPM_HP("Headphone Jack", NULL),
 	SND_SOC_DAPM_MIC("Mic Jack", NULL),
@@ -278,6 +297,8 @@ static int avs_rt5640_probe(struct platform_device *pdev)
 	card->resume_post = avs_card_resume_post;
 	card->dai_link = dai_link;
 	card->num_links = 1;
+	card->controls = card_controls;
+	card->num_controls = ARRAY_SIZE(card_controls);
 	card->dapm_widgets = card_widgets;
 	card->num_dapm_widgets = ARRAY_SIZE(card_widgets);
 	card->dapm_routes = routes;

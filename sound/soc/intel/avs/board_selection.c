@@ -318,7 +318,7 @@ static struct snd_soc_acpi_mach avs_tgl_i2s_machines[] = {
 		.mach_params = {
 			.i2s_link_mask = AVS_SSP(0),
 		},
-		.tplg_filename = "rt5640-tplg.bin",
+		.tplg_filename = "i2s-mixin-mixout-tplg-32bit.bin",
 	},
 	{
 		.id = "10EC5640",
@@ -327,7 +327,7 @@ static struct snd_soc_acpi_mach avs_tgl_i2s_machines[] = {
 		.mach_params = {
 			.i2s_link_mask = AVS_SSP(1),
 		},
-		.tplg_filename = "rt5640-tplg.bin",
+		.tplg_filename = "i2s-mixin-mixout-tplg-32bit.bin",
 	},
 	{
 		.id = "10EC5640",
