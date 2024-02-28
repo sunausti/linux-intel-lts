@@ -1487,6 +1487,12 @@ intel_dp_compute_link_config_wide(struct intel_dp *intel_dp,
 
 		for (i = 0; i < intel_dp->num_common_rates; i++) {
 			link_rate = intel_dp_common_rate(intel_dp, i);
+			if (mode_rate < 270000 && link_rate < 540000)
+				continue;
+			if (mode_rate < 540000 && link_rate < 540000)
+				continue;
+			if (mode_rate >= 540000 && link_rate < 270000)
+				continue;
 			if (link_rate < limits->min_rate ||
 			    link_rate > limits->max_rate)
 				continue;
