@@ -30,6 +30,7 @@
 #ifdef __ACRN_HAVE_SET_REG
 #define HC_SET_ONE_REG			_HC_ID(HC_ID, HC_ID_VM_BASE + 0x08)
 #endif
+#define HC_GET_VCPUS_REGS		_HC_ID(HC_ID, HC_ID_VM_BASE + 0x09)
 
 #define HC_ID_IRQ_BASE			0x20UL
 #define HC_INJECT_MSI			_HC_ID(HC_ID, HC_ID_IRQ_BASE + 0x03)
@@ -173,6 +174,11 @@ static inline long hcall_set_one_reg(u64 vmid, u64 addr)
 static inline long hcall_set_vcpu_regs(u64 vmid, u64 regs_state)
 {
 	return acrn_hypercall2(HC_SET_VCPU_REGS, vmid, regs_state);
+}
+
+static inline long hcall_get_vcpus_regs(u64 vmid, u64 regs_buf)
+{
+	return acrn_hypercall2(HC_GET_VCPUS_REGS, vmid, regs_buf);
 }
 
 /**
