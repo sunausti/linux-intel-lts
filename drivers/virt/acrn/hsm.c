@@ -129,6 +129,7 @@ static long acrn_dev_ioctl(struct file *filp, unsigned int cmd,
 	struct acrn_cap_bitmap *cap_bitmap;
 	struct acrn_vm_creation *vm_param;
 	struct acrn_vcpu_regs *cpu_regs;
+	struct acrn_dump_vcpus_regs *dump_regs;
 	struct acrn_ioreq_notify notify;
 	struct acrn_ptdev_irq *irq_info;
 	struct acrn_ioeventfd ioeventfd;
@@ -481,6 +482,22 @@ static long acrn_dev_ioctl(struct file *filp, unsigned int cmd,
 				   sizeof(irqfd)))
 			return -EFAULT;
 		ret = acrn_irqfd_config(vm, &irqfd);
+		break;
+	case ACRN_IOCTL_GET_VCPUS_REGS:
+		dump_regs = memdup_user((void __user *)ioctl_param,
+					sizeof(struct acrn_dump_vcpus_regs));
+		if (IS_ERR(dump_regs))
+			return PTR_ERR(dump_regs);
+		ret = hcall_get_vcpus_regs(vm->vmid, virt_to_phys(dump_regs));
+		if (ret == 0)
+			ret = copy_to_user((void __user *)ioctl_param,
+					   dump_regs,
+					   sizeof(struct acrn_dump_vcpus_regs));
+		if (ret < 0)
+			dev_dbg(acrn_dev.this_device,
+				"Failed to get regs state of VM%u!\n",
+				vm->vmid);
+		kfree(dump_regs);
 		break;
 	default:
 		dev_dbg(acrn_dev.this_device, "Unknown IOCTL 0x%x!\n", cmd);
