@@ -452,6 +452,29 @@ struct acrn_one_reg {
 	union acrn_reg value;
 };
 
+struct acrn_dump_regs {
+	__u16			vcpu_id;
+	struct acrn_gp_regs	gprs;
+	__le64			rip;
+	__le64			rflags;
+	__le64			cr[5];
+	struct segment_sel	cs;
+	struct segment_sel	ss;
+	struct segment_sel	ds;
+	struct segment_sel	es;
+	struct segment_sel	fs;
+	struct segment_sel	gs;
+	struct segment_sel	ldt;
+	struct segment_sel	tr;
+	struct segment_sel	gdt;
+	struct segment_sel	idt;
+};
+
+struct acrn_dump_vcpus_regs {
+	int vcpu_num;
+	struct acrn_dump_regs dump_regs[4];
+};
+
 /**
  * struct acrn_mmiodev - Info for assigning or de-assigning a MMIO device
  * @name:			Name of the MMIO device.
@@ -736,6 +759,8 @@ struct sbuf_setup_param {
 /* Available with ACRN_CAP_SET_REG */
 #define ACRN_IOCTL_SET_ONE_REG		\
 	_IOW(ACRN_IOCTL_TYPE, 0x19, struct acrn_one_reg)
+#define ACRN_IOCTL_GET_VCPUS_REGS	\
+	_IOR(ACRN_IOCTL_TYPE, 0x1A, struct acrn_dump_vcpus_regs)
 
 #define ACRN_IOCTL_INJECT_MSI		\
 	_IOW(ACRN_IOCTL_TYPE, 0x23, struct acrn_msi_entry)
