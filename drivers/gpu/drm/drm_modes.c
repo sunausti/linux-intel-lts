@@ -1699,10 +1699,10 @@ drm_mode_validate_size(const struct drm_display_mode *mode,
 		       int maxX, int maxY)
 {
 	if (maxX > 0 && mode->hdisplay > maxX)
-		return MODE_VIRTUAL_X;
+		return MODE_OK;
 
 	if (maxY > 0 && mode->vdisplay > maxY)
-		return MODE_VIRTUAL_Y;
+		return MODE_OK;
 
 	return MODE_OK;
 }
