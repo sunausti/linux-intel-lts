@@ -974,7 +974,7 @@ int genphy_c45_plca_set_cfg(struct phy_device *phydev,
                            const struct phy_plca_cfg *plca_cfg)
 {
        int ret;
-       u16 val;
+       u16 val = 0;
 
        // PLCA IDVER is read-only
        if (plca_cfg->version >= 0)
