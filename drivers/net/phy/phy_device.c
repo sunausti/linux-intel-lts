@@ -131,6 +131,8 @@ static const int phy_10gbit_full_features_array[] = {
 	ETHTOOL_LINK_MODE_1000baseT_Full_BIT,
 	ETHTOOL_LINK_MODE_10000baseT_Full_BIT,
 };
+__ETHTOOL_DECLARE_LINK_MODE_MASK(phy_eee_cap1_features) __ro_after_init;
+EXPORT_SYMBOL_GPL(phy_eee_cap1_features);
 
 static void features_init(void)
 {
