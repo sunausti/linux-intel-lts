@@ -256,6 +256,14 @@ void i915_setup_sysfs(struct drm_i915_private *dev_priv)
 		drm_warn(&dev_priv->drm,
 			 "failed to register GT sysfs directory\n");
 
+	if (hypervisor_is_type(X86_HYPER_QNX)) {
+		dev_priv->sysfs_qnx = kobject_create_and_add("qnx", &kdev->kobj);
+		if (!dev_priv->sysfs_qnx) {
+			drm_warn(&dev_priv->drm,
+			"failed to register qnx sysfs directory\n");
+		}
+	}
+
 	i915_sriov_sysfs_setup(dev_priv);
 
 	i915_setup_error_capture(kdev);
