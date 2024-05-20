@@ -8,6 +8,10 @@
 #include "i915_sriov_sysfs_types.h"
 #include "i915_sysfs.h"
 
+#ifdef CONFIG_QNX_GUEST
+#include "asm/hypervisor.h"
+#endif
+
 /*
  * /sys/class/drm/card*
  * └── iov/
@@ -413,6 +417,52 @@ failed:
 	return pf_setup_failed(i915, err, "link");
 }
 
+#ifdef CONFIG_QNX_GUEST
+static ssize_t
+i915_force_provisioning_vfs_set(struct kobject *kobj, struct kobj_attribute *attr, const char *buf, size_t count)
+{
+	struct drm_i915_private *i915 = sriov_kobj_to_i915(to_sriov_kobj(kobj));
+	/* Enable vf by setting 'i915_force_provisioning_vfs' to 1 */
+	int val;
+	int ret;
+	ret = kstrtoint(buf, 10, &val);
+	if (ret)
+		return -EINVAL;
+
+	if (val > 1)
+		return -EINVAL;
+
+	if (val == 1)
+		(void)i915_sriov_pf_enable_vfs(i915, val);
+
+	return count;
+}
+
+static ssize_t
+i915_force_provisioning_vfs_get(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
+{
+	return sprintf(buf, "0\n");
+}
+
+static struct kobj_attribute qnx_sriov = __ATTR(i915_force_provisioning_vfs,
+						0600,
+						i915_force_provisioning_vfs_get,
+						i915_force_provisioning_vfs_set);
+
+static int pf_setup_qnx_sriov_sysfs(struct drm_i915_private *i915)
+{
+	int err;
+	err = sysfs_create_file(i915->sysfs_qnx, &qnx_sriov.attr);
+	if (unlikely(err))
+		goto failed;
+
+	return 0;
+failed:
+	return pf_setup_failed(i915, err, "i915_force_provisioning_vfs");
+}
+
+#endif
+
 static void pf_teardown_device_link(struct drm_i915_private *i915)
 {
 	struct i915_sriov_pf *pf = &i915->sriov.pf;
@@ -476,6 +526,14 @@ int i915_sriov_sysfs_setup(struct drm_i915_private *i915)
 	err = pf_setup_device_link(i915);
 	if (unlikely(err))
 		goto failed_link;
+
+#ifdef CONFIG_QNX_GUEST
+	if (hypervisor_is_type(X86_HYPER_QNX)) {
+		err = pf_setup_qnx_sriov_sysfs(i915);
+		if (unlikely(err))
+			goto failed_link;
+	}
+#endif
 
 	pf_welcome(i915);
 	return 0;

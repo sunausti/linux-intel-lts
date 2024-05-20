@@ -340,6 +340,10 @@ struct drm_i915_private {
 
 	struct kobject *sysfs_gt;
 
+#ifdef CONFIG_QNX_GUEST
+	struct kobject *sysfs_qnx;
+#endif
+
 	/* Quick lookup of media GT (current platforms only have one) */
 	struct intel_gt *media_gt;
 
