@@ -965,6 +965,10 @@ err_minors:
 out_unlock:
 	if (drm_dev_needs_global_mutex(dev))
 		mutex_unlock(&drm_global_mutex);
+
+	if (!ret)
+		drm_client_dev_register(dev);
+
 	return ret;
 }
 EXPORT_SYMBOL(drm_dev_register);

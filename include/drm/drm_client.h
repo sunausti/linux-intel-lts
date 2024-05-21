@@ -121,6 +121,7 @@ int drm_client_init(struct drm_device *dev, struct drm_client_dev *client,
 void drm_client_release(struct drm_client_dev *client);
 void drm_client_register(struct drm_client_dev *client);
 
+void drm_client_dev_register(struct drm_device *dev);
 void drm_client_dev_unregister(struct drm_device *dev);
 void drm_client_dev_hotplug(struct drm_device *dev);
 void drm_client_dev_restore(struct drm_device *dev);
@@ -196,5 +197,7 @@ int drm_client_modeset_dpms(struct drm_client_dev *client, int mode);
 		if (connector->connector_type != DRM_MODE_CONNECTOR_WRITEBACK)
 
 void drm_client_debugfs_init(struct drm_minor *minor);
+
+void drm_bootsplash_client_register(struct drm_device *dev);
 
 #endif
