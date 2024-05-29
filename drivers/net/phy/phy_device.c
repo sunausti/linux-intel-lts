@@ -109,6 +109,15 @@ const int phy_10gbit_features_array[1] = {
 };
 EXPORT_SYMBOL_GPL(phy_10gbit_features_array);
 
+static const int phy_eee_cap1_features_array[] = {
+       ETHTOOL_LINK_MODE_100baseT_Full_BIT,
+       ETHTOOL_LINK_MODE_1000baseT_Full_BIT,
+       ETHTOOL_LINK_MODE_10000baseT_Full_BIT,
+       ETHTOOL_LINK_MODE_1000baseKX_Full_BIT,
+       ETHTOOL_LINK_MODE_10000baseKX4_Full_BIT,
+       ETHTOOL_LINK_MODE_10000baseKR_Full_BIT,
+};
+
 static const int phy_10gbit_fec_features_array[1] = {
 	ETHTOOL_LINK_MODE_10000baseR_FEC_BIT,
 };
@@ -199,6 +208,9 @@ static void features_init(void)
 	linkmode_set_bit_array(phy_10gbit_fec_features_array,
 			       ARRAY_SIZE(phy_10gbit_fec_features_array),
 			       phy_10gbit_fec_features);
+	linkmode_set_bit_array(phy_eee_cap1_features_array,
+                               ARRAY_SIZE(phy_eee_cap1_features_array),
+                               phy_eee_cap1_features);
 }
 
 void phy_device_free(struct phy_device *phydev)
