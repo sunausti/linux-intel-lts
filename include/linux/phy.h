@@ -1751,6 +1751,7 @@ int genphy_c45_ethtool_get_eee(struct phy_device *phydev,
 int genphy_c45_ethtool_set_eee(struct phy_device *phydev,
                               struct ethtool_eee *data);
 int genphy_c45_write_eee_adv(struct phy_device *phydev, unsigned long *adv);
+int genphy_c45_an_config_eee_aneg(struct phy_device *phydev);
 int genphy_c45_fast_retrain(struct phy_device *phydev, bool enable);
 
 /* Generic C45 PHY driver */
