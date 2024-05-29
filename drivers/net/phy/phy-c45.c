@@ -859,6 +859,15 @@ int genphy_c45_read_eee_abilities(struct phy_device *phydev)
 EXPORT_SYMBOL_GPL(genphy_c45_read_eee_abilities);
 
 /**
+ * genphy_c45_an_config_eee_aneg - configure EEE advertisement
+ * @phydev: target phy_device struct
+ */
+int genphy_c45_an_config_eee_aneg(struct phy_device *phydev)
+{
+	return genphy_c45_write_eee_adv(phydev, phydev->supported_eee);
+}
+
+/**
  * genphy_c45_pma_read_abilities - read supported link modes from PMA
  * @phydev: target phy_device struct
  *
