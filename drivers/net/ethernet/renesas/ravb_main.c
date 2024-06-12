@@ -2936,6 +2936,7 @@ static int ravb_remove(struct platform_device *pdev)
 
 	ravb_mdio_release(priv);
 
+	cancel_work_sync(&priv->work);
 	/* Stop PTP Clock driver */
 	if (info->ccc_gac)
 		ravb_ptp_stop(ndev);
