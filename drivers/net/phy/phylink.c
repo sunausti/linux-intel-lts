@@ -621,7 +621,7 @@ static int phylink_validate_mac_and_pcs(struct phylink *pl,
 		/* Validate the link parameters with the PCS */
 		if (pcs->ops->pcs_validate) {
 			ret = pcs->ops->pcs_validate(pcs, supported, state);
-			if (ret < 0) //|| phylink_is_empty_linkmode(supported))
+			if (ret < 0 || phylink_is_empty_linkmode(supported))
 				return -EINVAL;
 
 			/* Ensure the advertising mask is a subset of the
@@ -635,7 +635,7 @@ static int phylink_validate_mac_and_pcs(struct phylink *pl,
 	/* Then validate the link parameters with the MAC */
 	pl->mac_ops->validate(pl->config, supported, state);
 
-	return 0;// phylink_is_empty_linkmode(supported) ? -EINVAL : 0;
+	return phylink_is_empty_linkmode(supported) ? -EINVAL : 0;
 }
 
 static int phylink_validate_mask(struct phylink *pl, unsigned long *supported,
@@ -1611,7 +1611,7 @@ static int phylink_bringup_phy(struct phylink *pl, struct phy_device *phy,
 			       phy_interface_t interface)
 {
 	struct phylink_link_state config;
-	__ETHTOOL_DECLARE_LINK_MODE_MASK(supported);
+	__ETHTOOL_DECLARE_LINK_MODE_MASK(supported) = { 0, };
 	char *irq_str;
 	int ret;
 
@@ -1625,8 +1625,16 @@ static int phylink_bringup_phy(struct phylink *pl, struct phy_device *phy,
 	phy_support_asym_pause(phy);
 
 	memset(&config, 0, sizeof(config));
-	linkmode_copy(supported, phy->supported);
-	linkmode_copy(config.advertising, phy->advertising);
+
+	/* Set the supported and advertising link modes to 2500baseX_Full */
+	if (interface == PHY_INTERFACE_MODE_2500BASEX) {
+		phylink_set(supported, 2500baseX_Full);
+		phylink_set(config.advertising, 2500baseX_Full);
+	} else {
+		linkmode_copy(supported, phy->supported);
+		linkmode_copy(config.advertising, phy->advertising);
+	}
+
 
 	/* Check whether we would use rate matching for the proposed interface
 	 * mode.
