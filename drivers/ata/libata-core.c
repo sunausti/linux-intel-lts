@@ -5474,6 +5474,9 @@ static void ata_host_release(struct kref *kref)
 		if (!ap)
 			continue;
 
+		if (!ap)
+			continue;
+
 		kfree(ap->pmp_link);
 		kfree(ap->slave_link);
 		kfree(ap);
