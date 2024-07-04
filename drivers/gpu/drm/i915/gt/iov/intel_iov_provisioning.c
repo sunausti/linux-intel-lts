@@ -639,6 +639,7 @@ static int pf_provision_ggtt(struct intel_iov *iov, unsigned int id, u64 size)
 	struct drm_mm_node *node = &config->ggtt_region;
 	struct i915_ggtt *ggtt = iov_to_gt(iov)->ggtt;
 	u64 alignment = pf_get_ggtt_alignment(iov);
+	u64 ggtt_start = 0;
 	int err;
 
 	if (iov_to_gt(iov)->type == GT_MEDIA)
@@ -673,10 +674,13 @@ release:
 	if (size > pf_get_max_ggtt(iov))
 		return -EDQUOT;
 
+	ggtt_start = min_t(u64, pf_get_spare_ggtt(iov), ggtt->mappable_end);
+	ggtt_start = max_t(u64, ggtt->pin_bias, ggtt_start);
+
 	mutex_lock(&ggtt->vm.mutex);
 	err = i915_gem_gtt_insert(&ggtt->vm, NULL, node, size, alignment,
 		I915_COLOR_UNEVICTABLE,
-		ggtt->pin_bias, GUC_GGTT_TOP,
+		ggtt_start, GUC_GGTT_TOP,
 		PIN_HIGH);
 	mutex_unlock(&ggtt->vm.mutex);
 	if (unlikely(err))
