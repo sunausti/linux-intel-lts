@@ -2817,6 +2817,8 @@ parse_general_definitions(struct drm_i915_private *i915)
 		expected_size = 38;
 	} else if (i915->display.vbt.version <= 250) {
 		expected_size = 39;
+	} else if (i915->display.vbt.version == 256) {
+		expected_size = 40;
 	} else {
 		expected_size = sizeof(*child);
 		BUILD_BUG_ON(sizeof(*child) < 39);
