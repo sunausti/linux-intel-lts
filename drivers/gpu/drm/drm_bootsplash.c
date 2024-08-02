@@ -18,24 +18,44 @@
 #include <drm/drm_gem.h>
 #include <linux/dma-buf.h>
 #include "i915/display/intel_fbdev.h"
+#include "drm_bootsplash_bitmap.h"
 
 // drm_lastclose()
 #include "drm_internal.h"
-
-static bool drm_bootsplash_enabled = true;
-module_param_named(bootsplash_enabled, drm_bootsplash_enabled, bool, 0600);
-MODULE_PARM_DESC(bootsplash_enabled, "Enable bootsplash client [default=true]");
 
 struct drm_bootsplash {
 	struct drm_client_dev client;
 	struct mutex lock;
 	struct work_struct worker;
 	struct drm_client_buffer *buffers[2];
+	bitmap_t bitmap;
+	bool is_bitmap_load;
 	bool started;
 	bool stop;
 };
 
+static bool drm_bootsplash_key_init = false;
 static bool drm_bootsplash_key_pressed;
+
+int register_keyboard_notifier_one(struct notifier_block *nb)
+{
+	int ret = 0;
+	if(drm_bootsplash_key_init == false) {
+		ret = register_keyboard_notifier(nb);
+		drm_bootsplash_key_init = true;
+	}
+	return ret;
+}
+int unregister_keyboard_notifier_one(struct notifier_block *nb)
+{
+	int ret = 0;
+	if(drm_bootsplash_key_init == true) {
+		ret = unregister_keyboard_notifier(nb);
+		drm_bootsplash_key_init = false;
+	}
+	return ret;
+
+}
 
 static void drm_mode_print(struct drm_client_dev *client);
 
@@ -168,36 +188,31 @@ trim:
 	}
 #else 
 	i = 0;
-	static int boot = 1;
-	do {
-		if (boot) break;
-		drm_client_for_each_modeset(modeset, client) {
-			unsigned int j;
-			if (modeset && modeset->mode) {
-				if (modeset->mode->hdisplay >=2560) {
-					continue;
-				}
-			} else {
+	drm_client_for_each_modeset(modeset, client) {
+		unsigned int j;
+		if (modeset && modeset->mode) {
+			if (modeset->mode->hdisplay >=1920) {
 				continue;
 			}
-			drm_mode_destroy(client->dev, modeset->mode);
-			modeset->mode = NULL;
-
-			for (j = 0; j < modeset->num_connectors; j++) {
-				drm_connector_put(modeset->connectors[j]);
-				modeset->connectors[j] = NULL;
-			}
-			modeset->num_connectors = 0;
+		} else {
+			continue;
 		}
-	} while(0);
-	boot = 0;
+		drm_mode_destroy(client->dev, modeset->mode);
+		modeset->mode = NULL;
+
+		for (j = 0; j < modeset->num_connectors; j++) {
+			drm_connector_put(modeset->connectors[j]);
+			modeset->connectors[j] = NULL;
+		}
+		modeset->num_connectors = 0;
+	}
 #endif
 
 	if (!splash->buffers[0] ||
 	    splash->buffers[0]->fb->width != width ||
 	    splash->buffers[0]->fb->height != height) {
 		drm_bootsplash_buffer_delete(splash);
-		DRM_DEBUG_KMS("kanli drm_bootsplash_buffer_create width=%u height=%u\n",width, height);
+		DRM_DEBUG_KMS("drm_bootsplash_buffer_create width=%u height=%u\n",width, height);
 		ret = drm_bootsplash_buffer_create(splash, width, height);
 	}
 
@@ -213,7 +228,6 @@ static int drm_bootsplash_display_commit_buffer(struct drm_bootsplash *splash, u
 	struct drm_mode_set *modeset;
 
 	mutex_lock(&client->modeset_mutex);
-	drm_mode_print(client);
 
 	drm_client_for_each_modeset(modeset, client) {
 		if (modeset->mode)
@@ -229,7 +243,9 @@ static struct dma_buf *export_and_register_object_internal(struct drm_device *de
 						  uint32_t flags)
 {
 	struct dma_buf *dmabuf = ERR_PTR(-ENOENT);
-
+	/**
+	 * i915_gem_prime_export
+	*/
 	if (obj->funcs && obj->funcs->export)
 		dmabuf = obj->funcs->export(obj, flags);
 
@@ -244,6 +260,9 @@ static struct dma_buf *export_and_register_object_internal(struct drm_device *de
 	return dmabuf;
 }
 static int i915_dma_buf_vmap_internal(struct dma_buf *dma_buf, struct iosys_map *map) {
+	/**
+	 * i915_gem_dmabuf_vmap
+	*/
 	if (dma_buf &&  dma_buf->ops && dma_buf->ops->vmap) {
 		dma_buf->ops->vmap(dma_buf, map);
 		return 0;
@@ -265,69 +284,62 @@ static u32 drm_bootsplash_color_table[3] = {
 	0x00ff0000, 0x0000ff00, 0x000000ff,
 };
 
-static u32 buf[128]; 
+static void color_table_to_dmabuf(u32 *table, int index, struct iosys_map *dst, uint32_t pitches_0)
+{
+	unsigned int x, y;
+	int len;
+	static u32 buf[128];
+
+	for (x = 0; x < 128; x ++) {
+		buf[x] =  table[index];
+	}
+
+	if(!iosys_map_is_null(dst)) {
+		len = 128 * 4;
+		for (y = 0; y < 512; y++) {
+			iosys_map_memcpy_to(dst, 0, buf, len);
+			iosys_map_memcpy_to(dst, 2*len, buf, len);
+			iosys_map_memcpy_to(dst, 4*len, buf, len);
+			iosys_map_incr(dst, pitches_0);
+		}
+	} else {
+		DRM_DEBUG_KMS("%s: dst is NULL\n",__func__);
+	}
+}
 
 /* Draw a box with changing colors */
-static void drm_bootsplash_draw_box(struct drm_client_buffer *buffer, unsigned int sequence)
+static void drm_bootsplash_draw_box(struct drm_bootsplash *splash, struct drm_client_buffer *buffer, unsigned int sequence)
 {
 	unsigned int width = buffer->fb->width;
 	unsigned int height = buffer->fb->height;
 	unsigned int pitches_0 = buffer->fb->pitches[0];
-	unsigned int x, y;
-	u32 *pix;
-	int len;
+
 	int ret;
 
-
-#if 0
-	pix = buffer->vaddr;
-	pix += ((height / 2) - 50) * width;
-	pix += (width / 2) - 50;
-
-	for (y = 0; y < 100; y++) {
-		for (x = 0; x < 100; x++)
-			*pix++ = drm_bootsplash_color_table[sequence];
-		pix += width - 100;
-	}
-#elif 1
 	struct dma_buf *dma_buf;
-	int flags = 0;
-	struct iosys_map map, dst;
-	
+	struct iosys_map map;
+
 	dma_buf = export_and_register_object_internal(buffer->client->dev, buffer->gem, 0);
-	if (ret) {
-		DRM_DEBUG_KMS("kanli: export_and_register_object_internal ret=%d\n", ret);
+	if (IS_ERR(dma_buf)) {
+		DRM_DEBUG_KMS("%s: export_and_register_object_internal error\n", __func__);
 		goto out;
 	}
-	for (x = 0; x < 128; x ++) {
-            buf[x] =  drm_bootsplash_color_table[sequence];
-     }
 
 	ret = i915_dma_buf_vmap_internal(dma_buf, &map);
 
 	if (ret) {
-		DRM_DEBUG_KMS("kanli: drm_gem_dmabuf_vmap ret=%d\n", ret);
+		DRM_DEBUG_KMS("%s: drm_gem_dmabuf_vmap ret=%d\n", __func__, ret);
 		goto out;
 	}
-	dst = map;
-    if(!iosys_map_is_null(&dst)) {
-        len = 128 * 4;
-        DRM_DEBUG_KMS("kanli: pitches_0=%u len=%u width=%u height=%u\n", pitches_0, len, width, height);
-        for (y = 0; y < 512; y++) {
-            iosys_map_memcpy_to(&dst, 0, buf, len);
-			iosys_map_memcpy_to(&dst, 2*len, buf, len);
-			iosys_map_memcpy_to(&dst, 4*len, buf, len);
-            iosys_map_incr(&dst, pitches_0);
-        }
-    } else {
-        DRM_DEBUG_KMS("kanli: dst is NULL\n");
-
-    }
+	DRM_DEBUG_KMS("%s: pitches_0=%u width=%u height=%u\n", __func__, pitches_0, width, height);
+	if (splash->is_bitmap_load) {
+		bitmap_to_dmabuf(&splash->bitmap, &map, pitches_0);
+	} else {
+		color_table_to_dmabuf(drm_bootsplash_color_table, sequence, &map, pitches_0);
+	}
 	i915_dma_buf_vunmap_internal(dma_buf, &map);
 out:
-	do{}while(0);
-#endif
-
+	return;
 }
 
 static int drm_bootsplash_draw(struct drm_bootsplash *splash, unsigned int sequence, unsigned int buffer_num)
@@ -337,7 +349,7 @@ static int drm_bootsplash_draw(struct drm_bootsplash *splash, unsigned int seque
 
 	DRM_DEBUG_KMS("draw: buffer_num=%u, sequence=%u\n", buffer_num, sequence);
 
-	drm_bootsplash_draw_box(splash->buffers[buffer_num], sequence);
+	drm_bootsplash_draw_box(splash, splash->buffers[buffer_num], sequence);
 
 	return drm_bootsplash_display_commit_buffer(splash, buffer_num);
 }
@@ -352,8 +364,6 @@ static void drm_bootsplash_worker(struct work_struct *work)
 	int ret = 0;
 
     while (!drm_bootsplash_key_pressed) {
-    
-
 		mutex_lock(&splash->lock);
 
 		stop = splash->stop;
@@ -362,13 +372,16 @@ static void drm_bootsplash_worker(struct work_struct *work)
 
 		ret = drm_bootsplash_draw(splash, sequence, buffer_num);
 
+		DRM_DEV_DEBUG_KMS(dev->dev, "Bootsplash show pic ok ret %d\n",
+				ret);
+
 		mutex_unlock(&splash->lock);
 
 		if (stop || ret == -ENOENT || ret == -EBUSY)
 			break;
 
-		if (++sequence == 3)
-			sequence = 0;
+		if (++sequence == 2)
+			break;
 
 		msleep(500);
 	}
@@ -388,11 +401,13 @@ static int drm_bootsplash_client_hotplug(struct drm_client_dev *client)
 {
 	struct drm_bootsplash *splash = container_of(client, struct drm_bootsplash, client);
 	int ret = 0;
+
 	DRM_DEBUG_KMS("%s: key_pressed=%u, start=%u stop=%u\n", 
 	__func__, drm_bootsplash_key_pressed, splash->started, splash->stop);
 	drm_bootsplash_key_pressed = 0;
 	splash->started = 0;
 	splash->stop = 0;
+
 	if (drm_bootsplash_key_pressed)
 		return 0;
 
@@ -437,9 +452,15 @@ static void drm_bootsplash_client_unregister(struct drm_client_dev *client)
 	flush_work(&splash->worker);
 
 	drm_client_release(client);
+
+	if (splash->is_bitmap_load) {
+		bitmap_release(&splash->bitmap);
+	}
+	splash->is_bitmap_load = 0;
+
 	kfree(splash);
 
-	unregister_keyboard_notifier(&drm_bootsplash_keyboard_notifier_block);
+	unregister_keyboard_notifier_one(&drm_bootsplash_keyboard_notifier_block);
 
 	DRM_DEBUG_KMS("%s: OUT\n", __func__);
 }
@@ -455,9 +476,6 @@ void drm_bootsplash_client_register(struct drm_device *dev)
 	struct drm_bootsplash *splash;
 	int ret;
 
-	if (!drm_bootsplash_enabled)
-		return;
-
 	splash = kzalloc(sizeof(*splash), GFP_KERNEL);
 	if (!splash)
 		return;
@@ -469,16 +487,20 @@ void drm_bootsplash_client_register(struct drm_device *dev)
 		return;
 	}
 
-	/* For this simple example only allow the first */
-	drm_bootsplash_enabled = false;
-
 	mutex_init(&splash->lock);
+	
+	DRM_DEBUG_KMS("%s before load firmware\n", __func__);
+	ret = bitmap_load(dev, &splash->bitmap, "bitmap/default.bmp");
+	if (ret < 0) {
+		splash->is_bitmap_load = false;
+	} else {
+		splash->is_bitmap_load = true;
+	}
+	DRM_DEBUG_KMS("%s after load firmware is_bitmap_load: %d\n", __func__, splash->is_bitmap_load);
 
 	INIT_WORK(&splash->worker, drm_bootsplash_worker);
 
-	register_keyboard_notifier(&drm_bootsplash_keyboard_notifier_block);
-
-	drm_bootsplash_client_hotplug(&splash->client);
+	register_keyboard_notifier_one(&drm_bootsplash_keyboard_notifier_block);
 
 	drm_client_register(&splash->client);
 }
@@ -491,10 +513,10 @@ static void drm_mode_print(struct drm_client_dev *client)
 		i++;
 		if (!modeset->x&&!modeset->y){
 			if (modeset->mode) {
-				DRM_DEBUG_KMS("kanli for all %s i=%d modeset->num_connectors=%d width=%u height=%u\n",
+				DRM_DEBUG_KMS("for all %s i=%d modeset->num_connectors=%ld width=%u height=%u\n",
 						__func__, i, modeset->num_connectors, modeset->mode->hdisplay, modeset->mode->vdisplay);
 			} else {
-				DRM_DEBUG_KMS("kanli for all %s i=%d modeset->num_connectors=%d mode null\n",
+				DRM_DEBUG_KMS("for all %s i=%d modeset->num_connectors=%ld mode null\n",
 						__func__, i, modeset->num_connectors);
 
 			}

@@ -924,6 +924,7 @@ void drm_kms_helper_poll_init(struct drm_device *dev)
 	dev->mode_config.poll_enabled = true;
 
 	drm_kms_helper_poll_enable(dev);
+	drm_client_dev_register(dev);
 }
 EXPORT_SYMBOL(drm_kms_helper_poll_init);
 
