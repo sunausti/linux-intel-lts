@@ -131,7 +131,7 @@ static const struct pmc_serdes_regs pid_modphy1_2p5g_regs[] = {
 };
 
 static const int ehl_tsn_lanes[] = {7, 8, 9, 10, 11};
-static const int adln_rplp_tsn_lanes[] = {6, 7};
+static const int adln_rplp_tsn_lanes[] = {6, 7, 11};
 
 #else
 
