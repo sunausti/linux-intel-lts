@@ -19002,6 +19002,13 @@ T:	git git://git.kernel.org/pub/scm/linux/kernel/git/paulmck/linux-rcu.git dev
 F:	include/linux/srcu*.h
 F:	kernel/rcu/srcu*.c
 
+SLIM BOOTLOADER (SBL) FIRMWARE UPDATE WMI DRIVER
+M:	Jithu Joseph <jithu.joseph@intel.com>
+R:	Maurice Ma <maurice.ma@intel.com>
+S:	Maintained
+W:	https://slimbootloader.github.io/security/firmware-update.html
+F:	drivers/platform/x86/sbl_fwu_wmi.c
+
 SMACK SECURITY MODULE
 M:	Casey Schaufler <casey@schaufler-ca.com>
 L:	linux-security-module@vger.kernel.org

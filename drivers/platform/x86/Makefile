@@ -16,6 +16,7 @@ obj-$(CONFIG_PEAQ_WMI)			+= peaq-wmi.o
 obj-$(CONFIG_XIAOMI_WMI)		+= xiaomi-wmi.o
 obj-$(CONFIG_GIGABYTE_WMI)		+= gigabyte-wmi.o
 obj-$(CONFIG_YOGABOOK_WMI)		+= lenovo-yogabook-wmi.o
+obj-$(CONFIG_SBL_FWU_WMI)		+= sbl_fwu_wmi.o
 
 # Acer
 obj-$(CONFIG_ACERHDF)		+= acerhdf.o
