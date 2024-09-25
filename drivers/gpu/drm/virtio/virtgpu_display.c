@@ -54,9 +54,15 @@ static int virtio_irq_enable_vblank(struct drm_crtc *crtc)
 	struct drm_device *dev = crtc->dev;
 	struct virtio_gpu_device *vgdev = dev->dev_private;
 	struct virtio_gpu_output *output = drm_crtc_to_virtio_gpu_output(crtc);
+	int ret;
 
 	virtio_gpu_vblank_poll_arm(vgdev->vblank[output->index].vblank.vq);
-	virtqueue_enable_cb(vgdev->vblank[output->index].vblank.vq);
+	ret = virtqueue_enable_cb(vgdev->vblank[output->index].vblank.vq);
+	if (ret) {
+	    pr_err("Failed to enable virtqueue callback for vblank, error: %d\n", ret);
+	    return ret;
+	}
+
 	return 0;
 }
 
