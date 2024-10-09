@@ -1104,10 +1104,17 @@ static const struct snd_soc_dapm_widget rt5640_dapm_widgets[] = {
 
 	/* Input Side */
 	/* micbias */
+#if 0
 	SND_SOC_DAPM_SUPPLY("LDO2", RT5640_PWR_ANLG1,
 			RT5640_PWR_LDO2_BIT, 0, NULL, 0),
 	SND_SOC_DAPM_SUPPLY("MICBIAS1", RT5640_PWR_ANLG2,
 			RT5640_PWR_MB1_BIT, 0, NULL, 0),
+#else
+        SND_SOC_DAPM_SUPPLY("LDO2", SND_SOC_NOPM,
+                        0, 0, NULL, 0),
+        SND_SOC_DAPM_SUPPLY("MICBIAS1", SND_SOC_NOPM,
+                        0, 0, NULL, 0),
+#endif
 	/* Input Lines */
 	SND_SOC_DAPM_INPUT("DMIC1"),
 	SND_SOC_DAPM_INPUT("DMIC2"),
@@ -1129,12 +1136,21 @@ static const struct snd_soc_dapm_widget rt5640_dapm_widgets[] = {
 	SND_SOC_DAPM_SUPPLY("DMIC2 Power", RT5640_DMIC, RT5640_DMIC_2_EN_SFT, 0,
 		NULL, 0),
 	/* Boost */
+#if 0
 	SND_SOC_DAPM_PGA("BST1", RT5640_PWR_ANLG2,
 		RT5640_PWR_BST1_BIT, 0, NULL, 0),
 	SND_SOC_DAPM_PGA("BST2", RT5640_PWR_ANLG2,
 		RT5640_PWR_BST4_BIT, 0, NULL, 0),
 	SND_SOC_DAPM_PGA("BST3", RT5640_PWR_ANLG2,
 		RT5640_PWR_BST2_BIT, 0, NULL, 0),
+#else
+	SND_SOC_DAPM_PGA("BST1", SND_SOC_NOPM,
+		0, 0, NULL, 0),
+	SND_SOC_DAPM_PGA("BST2", SND_SOC_NOPM,
+		0, 0, NULL, 0),
+	SND_SOC_DAPM_PGA("BST3", SND_SOC_NOPM,
+		0, 0, NULL, 0),
+#endif
 	/* Input Volume */
 	SND_SOC_DAPM_PGA("INL VOL", RT5640_PWR_VOL,
 		RT5640_PWR_IN_L_BIT, 0, NULL, 0),
@@ -2017,6 +2033,7 @@ static int rt5640_set_bias_level(struct snd_soc_component *component,
 		snd_soc_component_write(component, RT5640_PWR_DIG2, 0x0000);
 		snd_soc_component_write(component, RT5640_PWR_VOL, 0x0000);
 		snd_soc_component_write(component, RT5640_PWR_MIXER, 0x0000);
+#if 0
 		if (rt5640->jd_src == RT5640_JD_SRC_HDA_HEADER)
 			snd_soc_component_write(component, RT5640_PWR_ANLG1,
 				0x2818);
@@ -2024,6 +2041,7 @@ static int rt5640_set_bias_level(struct snd_soc_component *component,
 			snd_soc_component_write(component, RT5640_PWR_ANLG1,
 				0x0000);
 		snd_soc_component_write(component, RT5640_PWR_ANLG2, 0x0000);
+#endif
 		break;
 
 	default:
@@ -2704,6 +2722,8 @@ static int rt5640_probe(struct snd_soc_component *component)
 	snd_soc_component_update_bits(component, RT5640_DUMMY1, 0x0301, 0x0301);
 	snd_soc_component_update_bits(component, RT5640_MICBIAS, 0x0030, 0x0030);
 	snd_soc_component_update_bits(component, RT5640_DSP_PATH2, 0xfc00, 0x0c00);
+	snd_soc_component_update_bits(component, RT5640_PWR_ANLG1, 0x0004, 0x0004);
+	snd_soc_component_update_bits(component, RT5640_PWR_ANLG2, 0xd800, 0xd800);
 
 	switch (snd_soc_component_read(component, RT5640_RESET) & RT5640_ID_MASK) {
 	case RT5640_ID_5640:
