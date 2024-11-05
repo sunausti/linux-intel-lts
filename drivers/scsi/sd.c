@@ -3061,7 +3061,7 @@ static void sd_read_block_provisioning(struct scsi_disk *sdkp)
 	rcu_read_lock();
 	vpd = rcu_dereference(sdkp->device->vpd_pgb2);
 
-	if (!vpd || vpd->len < 8) {
+	if (!vpd || vpd->len <= 8) {
 		rcu_read_unlock();
 		return;
 	}
