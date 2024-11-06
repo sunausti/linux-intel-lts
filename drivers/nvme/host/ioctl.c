@@ -241,7 +241,7 @@ static int nvme_map_user_request(struct request *req, u64 ubuffer,
 	}
 	/* Guard for a short bounce buffer */
 	if (bio->bi_private) {
-		if (!nvme_validate_buffer_len(ns, nvme_req(req)->cmd,
+		if (!ns || !nvme_validate_buffer_len(ns, nvme_req(req)->cmd,
 					      meta_len, bufflen)) {
 			ret = -EINVAL;
 			goto out_unmap;
