@@ -2832,8 +2832,43 @@ static int load_module(struct load_info *info, const char __user *uargs,
 		}
 		pr_debug("%s mod->args: %llx \n", __func__, (u64)mod->args);
 	} else {
-		char *arg = "";
-		mod->args = kmemdup(arg, strlen(arg) + 1, GFP_KERNEL);
+		char *arg, *args, *param, *val;
+
+		args = kzalloc(PAGE_SIZE, GFP_KERNEL);
+		if (!args) {
+			pr_err("Module %s args alloc failed\n", mod->name);
+			goto free_modinfo;
+		}
+		memcpy(args, saved_command_line, strlen(saved_command_line));
+
+		mod->args = kzalloc(PAGE_SIZE, GFP_KERNEL);
+		if (!mod->args) {
+			pr_err("Module %s mod->args alloc failed\n", mod->name);
+			kfree(args);
+			goto free_modinfo;
+		}
+
+		arg = args;
+		while (*arg) {
+			arg = next_arg(arg, &param, &val);
+			/* Stop at -- */
+			if (!val && strcmp(param, "--") == 0)
+				break;
+			if (!strncmp(param, mod->name, strlen(mod->name))) {
+				param += strlen(mod->name) + 1;
+				strcat(mod->args, param);
+				strcat(mod->args, "=");
+				strcat(mod->args, val);
+				strcat(mod->args, " ");
+				pr_debug("%s mod->args: %s\n", __func__, mod->args);
+			}
+		}
+
+		if (strlen(mod->args))
+			mod->args[strlen(mod->args)-1] = '\0';
+
+		pr_debug("%s mod->args: %s len: %ld\n", __func__, mod->args, strlen(mod->args));
+		kfree(args);
 	}
 
 	init_build_id(mod, info);
