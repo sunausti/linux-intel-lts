@@ -7067,6 +7067,8 @@ static void intel_atomic_commit_tail(struct intel_atomic_state *state)
 
 	if (state->modeset)
 		intel_set_cdclk_post_plane_update(state);
+	
+	drm_atomic_helper_update_flip_sequence(dev, &state->base);
 
 	intel_wait_for_vblank_workers(state);
 
