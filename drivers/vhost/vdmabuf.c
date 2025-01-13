@@ -571,7 +571,7 @@ static int vhost_vdmabuf_dmabuf_mmap(struct dma_buf *dmabuf,
 	if (!imp->pages_info)
 		return -EINVAL;
 
-	vma->vm_flags |= VM_DONTEXPAND | VM_DONTDUMP;
+	vm_flags_set(vma, VM_DONTEXPAND | VM_DONTDUMP);
 	vma->vm_page_prot = pgprot_writecombine(vm_get_page_prot(vma->vm_flags));
 
 	uaddr = vma->vm_start;
@@ -1677,7 +1677,7 @@ static int virtio_vdmabuf_mmap_dmabuf(struct dma_buf *dmabuf,
 	if (!exp_buf->pages_info)
 		return -EINVAL;
 
-	vma->vm_flags |= VM_DONTEXPAND | VM_DONTDUMP;
+	vm_flags_set(vma, VM_DONTEXPAND | VM_DONTDUMP);
 	vma->vm_page_prot = pgprot_writecombine(vm_get_page_prot(vma->vm_flags));
 
 	uaddr = vma->vm_start;
