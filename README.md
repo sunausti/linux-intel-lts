@@ -25,8 +25,9 @@ In Ubuntu 22.04
 sudo apt-get install git fakeroot build-essential ncurses-dev xz-utils libssl-dev bc flex libelf-dev bison lz4
 ```
 
+generate or copy kernel config to **.config**
+
 ```
-cp config.camera .config
 git clone https://gitlab.com/kernel-firmware/linux-firmware.git firmware
 touch firmware/i915/compat.ko
 touch firmware/i915/i915_ag.ko
@@ -36,6 +37,10 @@ need cp dg2 latest guc firmware from internally
 ```
 make menuconfig
 make
+```
+once build pass, please build i915_ag, and cp i915_ag.ko compat.ko from i915 backport module to firmware/i915
+
+```
 sudo make modules_install
 sudo make install
 ```
