@@ -39,11 +39,14 @@ make menuconfig
 make
 ```
 once build pass, please build i915_ag, and cp i915_ag.ko compat.ko from i915 backport module to firmware/i915
+then make again
 
 ```
-sudo make modules_install
-sudo make install
+make 
+make bindeb-pkg
 ```
+the deb package will be in ../ , install it and reboot.
+
 If you are compiling the kernel on Ubuntu, you may receive the following error that interrupts the building process:
 ```
 No rule to make target 'debian/canonical-certs.pem
