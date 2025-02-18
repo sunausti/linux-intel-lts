@@ -707,7 +707,7 @@ static struct ipu_isys_subdev_info d4xx_sd_3 = {
 #if IS_ENABLED(CONFIG_VIDEO_MAX96724)
 static struct ipu_isys_csi2_config max96724_csi2_cfg = {
 	.nlanes = 4,
-	.port = 1,
+	.port = 2,
 };
 
 static struct max9671x_subdev_platform_data max96724_subdev_pdata_1 = {
@@ -738,7 +738,7 @@ static struct max9671x_subdev_info max96724_subdevs[] = {
 	{
 		.board_info = {
 			.type = "max9295e_dummy",
-			.addr = 0x43,
+			.addr = 0x45,
 			.platform_data = &max96724_subdev_pdata_1,
 		},
 		.rx_port = 0,
@@ -752,7 +752,7 @@ static struct max9671x_subdev_info max96724_subdevs[] = {
 	{
 		.board_info = {
 			.type = "max9295e_dummy",
-			.addr = 0x44,
+			.addr = 0x46,
 			.platform_data = &max96724_subdev_pdata_2,
 		},
 		.rx_port = 1,
@@ -766,7 +766,7 @@ static struct max9671x_subdev_info max96724_subdevs[] = {
 	{
 		.board_info = {
 			.type = "max9295e_dummy",
-			.addr = 0x45,
+			.addr = 0x47,
 			.platform_data = &max96724_subdev_pdata_3,
 		},
 		.rx_port = 2,
@@ -780,7 +780,7 @@ static struct max9671x_subdev_info max96724_subdevs[] = {
 	{
 		.board_info = {
 			.type = "max9295e_dummy",
-			.addr = 0x46,
+			.addr = 0x48,
 			.platform_data = &max96724_subdev_pdata_4,
 		},
 		.rx_port = 3,
@@ -811,10 +811,10 @@ static struct ipu_isys_subdev_info max96724_sd = {
 	.i2c = {
 		.board_info = {
 			.type = "max96724",
-			.addr = 0x29,
+			.addr = 0x27,
 			.platform_data = &max96724_pdata,
 		},
-		.i2c_adapter_bdf = "0000:00:19.1",
+		.i2c_adapter_bdf = "0000:00:15.0",
 	},
 };
 #endif
@@ -1081,7 +1081,7 @@ static struct ipu_isys_subdev_pdata pdata = {
 
 static void ipu6_quirk(struct pci_dev *pci_dev)
 {
-	dev_info(&pci_dev->dev, "%s() attach the platform data", __func__);
+	dev_info(&pci_dev->dev, "%s() attach the platform data ===========", __func__);
 	pci_dev->dev.platform_data = &pdata;
 }
 

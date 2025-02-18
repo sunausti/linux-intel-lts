@@ -1113,10 +1113,10 @@ static int max96724_init(struct max96724_priv *priv)
 
 	/* FIXME: need external method to resolve conflict address */
 	max96724_write(priv, 0x03, 0xff);
-	max96724_write_rem(priv, 0x28, 0x01, 0x11);
-	max96724_write_rem(priv, 0x28, 0x03, 0x57);
-	max96724_write_rem(priv, 0x2a, 0x01, 0x11);
-	max96724_write_rem(priv, 0x2a, 0x03, 0x57);
+	//max96724_write_rem(priv, 0x27, 0x01, 0x11);
+	//max96724_write_rem(priv, 0x27, 0x03, 0x57);
+	//max96724_write_rem(priv, 0x2a, 0x01, 0x11);
+	//max96724_write_rem(priv, 0x2a, 0x03, 0x57);
 
 	/* chip identify */
 	ret = max96724_read(priv, 0x0D, &val);
@@ -1128,7 +1128,7 @@ static int max96724_init(struct max96724_priv *priv)
 	}
 	dev_info(&priv->client->dev, "des dev id is 0x%x, slave addr is 0x%d\n",val, priv->client->addr);
 
-	if (val != 0xA0) {
+	if (val != 0xA2) {
 		dev_err(&priv->client->dev, "Failed to detect max96724 %x\n", val);
 		return -ENXIO;
 	}
