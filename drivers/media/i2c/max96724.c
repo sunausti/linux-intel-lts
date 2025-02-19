@@ -87,7 +87,32 @@ static unsigned int mbus_code_to_mipi(u32 code)
 }
 
 static const struct max96724_reg desay_init[] = {
+	{0x040B,0x00},
+	{0x0006,0xf2},
+	{0x0455,0x00},
+	{0x0003,0xAA},
+	{0x00F0,0x42},
+	{0x00F1,0xC8},
+	{0x00F4,0x0F},
+
+	{0x040c,0x10},//vc1
+	{0x0415,0xaf},//vc1
+	{0x040e,0x40},//vc1
+	{0x040f,0x0e},//vc1
+	{0x0415,0xaf},//vc1
+	{0x0411,0x08},//vc1
+	{0x041a,0x20},//vc1
+	
+
+	{0x0018,0x0f},
+};
+
+
+//oms
+/*
+static const struct max96724_reg desay_init[] = {
 	{0x0003,0xAA}, 
+	{0x0455,0x00},
 	{0x00F0,0x62},
 	{0x00F1,0xC8},
 	{0x00F4,0x0F},
@@ -150,11 +175,14 @@ static const struct max96724_reg desay_init[] = {
 	{0x1E00,0xF5},
 	{0x1F00,0xF5},
 };
+*/
 static const struct max96724_reg_list desay_init_setting = {
 	.num_of_regs = ARRAY_SIZE(desay_init),
 	.regs = desay_init,
 };
 
+
+//dms
 static const struct max96724_reg desay_init_dms[] = {
 	{0x0017,0x14},
 	{0x0019,0x94},
@@ -362,7 +390,18 @@ static const struct max96724_reg link_abcd_default[] = {
 	{0x1432, 0x7F},
 };
 
+//oms, 9295a
 static const struct max96724_reg link_abcd_default_9295[] = {
+/*
+	{0x0100,0xF2},
+	{0x0101,0x4A},
+	{0x0002,0x13},
+	{0x0007,0x07},
+	{0x03F0,0x51},
+	{0x03F1,0x05},
+	{0x02D6,0x00},
+	{0x02C1,0x10},
+*/
 	{0x0100,0xF2},
 	{0x0101,0x4A},
 	{0x0002,0x13},
@@ -373,6 +412,7 @@ static const struct max96724_reg link_abcd_default_9295[] = {
 	{0x02C1,0x10},
 };
 
+//dms, 9295e
 static const struct max96724_reg link_abcd_default_9295_dms[] = {
 	{0x02df,0x00},//sleep 1
 	{0x0330,0x0c},//sleep 1
@@ -385,8 +425,8 @@ static const struct max96724_reg link_abcd_default_9295_dms[] = {
 };
 
 static const struct max96724_reg_list link_setting = {
-	.num_of_regs = ARRAY_SIZE(link_abcd_default_9295_dms),
-	.regs = link_abcd_default_9295_dms,
+	.num_of_regs = ARRAY_SIZE(link_abcd_default_9295),
+	.regs = link_abcd_default_9295,
 };
 
 static const s64 max96724_link_freq[] = {
@@ -597,10 +637,10 @@ static int max96724_s_stream(struct v4l2_subdev *sd, int enable)
 {
 	struct max96724_priv *priv = to_max96724(sd);
 	if(enable) {
-		max96724_write(priv, 0x0002, 0x53);
+		//max96724_write(priv, 0x0002, 0x53); //should be for 9295a
 		max96724_write(priv, 0x040b, 0x42);
 	} else {
-		max96724_write(priv, 0x0002, 0x03);
+		//max96724_write(priv, 0x0002, 0x03);
 		max96724_write(priv, 0x040b, 0x00);
 	}
 
@@ -624,7 +664,7 @@ static int max96724_s_stream_vc(struct max96724_priv *priv, u8 vc_id, u8 state)
 		}
 
 		/* force mipi clocks running */
-		dev_dbg(&priv->client->dev, "power on MIPI\n");
+		dev_dbg(&priv->client->dev, "power on MIPI\n"); //should be for test internally, not to use
 		max96724_write(priv, 0x8a0, 0x04);
 		max96724_write(priv, 0x8a0, 0x84);
 		priv->stream_count++;
@@ -849,7 +889,7 @@ static int max96724_remote_init(struct max96724_priv *priv, int rx_port,
 		return -EIO;
 	}
 
-	max96724_write(priv, 0x03, ~(1 << rx_port * 2));
+	max96724_write(priv, 0x03, ~(1 << rx_port * 2)); //just for a specific link (a,b,d,or d)
 
 	/* get current addr in use */
 	if (max96724_read_rem(priv, info->phy_i2c_addr, 0x10, &val))
@@ -1215,7 +1255,10 @@ static int max96724_init(struct max96724_priv *priv)
 	/* MIPI PHY */
 	ret = max96724_write_reg_list(priv, &mipi_phy_setting);
 #endif
-	ret = max96724_write_reg_list(priv, &desay_init_dms_setting);
+	ret = max96724_write_reg_list(priv, &desay_init_setting);
+	//ret = max96724_write_reg_list(priv, &desay_init_dms_setting);
+	msleep(200);
+	max96724_write(priv, 0x40b, 0x02);
 	return 0;
 }
 
