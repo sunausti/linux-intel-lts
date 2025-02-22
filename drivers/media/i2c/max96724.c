@@ -60,15 +60,8 @@ static struct regmap_config config16 = {
 };
 
 /*
- * 1280x960 UYVY
+ * 1600x1300 UYVY
  */
-#if 0
-static s64 max96724_query_sub_stream[] = {
-	0x001e050003c0200f, 0x011e050003c0200f,
-	0x021e050003c0200f, 0x031e050003c0200f,
-};
-#endif
-
 static s64 max96724_query_sub_stream[] = {
 	0x001e06400514200f, 0x011e06400514200f,
 	0x001e06400514200f, 0x011e06400514200f,
@@ -86,6 +79,111 @@ static unsigned int mbus_code_to_mipi(u32 code)
 	}
 }
 
+static const struct max96724_reg init_1[] = {
+	//
+	{0x040B,0x00},
+	{0x0010,0x11},
+	{0x0011,0x11},
+	{0x0006,0xf7},
+	{0x0018,0x0F},
+};
+static const struct max96724_reg_list init_1_setting = {
+	.num_of_regs = ARRAY_SIZE(init_1),
+	.regs = init_1,
+};
+
+static const struct max96724_reg init_2[] = {
+	//delay 120ms
+	{0x0455,0x00},
+	{0x0003,0xAA}, 
+	{0x00F0,0x40},
+	{0x00F1,0xC8},
+	{0x00F4,0x0F},
+	{0x041A,0x60},
+	{0x040e,0x40},
+	{0x040f,0x7e},
+	{0x0410,0x02},
+	{0x0411,0x48},
+};
+static const struct max96724_reg_list init_2_setting = {
+	.num_of_regs = ARRAY_SIZE(init_2),
+	.regs = init_2,
+};
+
+static const struct max96724_reg init_3[] = {
+	// 
+	{0x090B,0x07},
+	{0x092D,0x15},
+	{0x090D,0x1E},
+	{0x090E,0x1E},
+	{0x090F,0x00},
+	{0x0910,0x00},
+	{0x0911,0x01},
+	{0x0912,0x01},
+	{0x094B,0x07},
+	{0x096D,0x15},
+	{0x094D,0x1E},
+	{0x094E,0x5E},
+	{0x094F,0x00},
+	{0x0950,0x40},
+	{0x0951,0x01},
+	{0x0952,0x41},
+	{0x098B,0x07},
+	{0x09AD,0x15},
+	{0x098D,0x1E},
+	{0x098E,0x9E},
+	{0x098F,0x00},
+	{0x0990,0x80},
+	{0x0991,0x01},
+	{0x0992,0x81},
+};
+static const struct max96724_reg_list init_3_setting = {
+	.num_of_regs = ARRAY_SIZE(init_3),
+	.regs = init_3,
+};
+
+static const struct max96724_reg init_4[] = {
+	{0x08A0,0x04},
+	{0x08A3,0xE4},
+	{0x08A4,0xE4},
+	{0x090A,0xC0},
+	{0x094A,0xC0},
+	{0x098A,0xC0},
+	{0x09CA,0xC0},
+	//{0x08A2,0xF0},
+	//{0x1C00,0xF4},
+	//{0x1D00,0xF4},
+	//{0x1E00,0xF4},
+	//{0x1F00,0xF4},
+	{0x0415,0xaf},
+	{0x0418,0x6f},
+	/*
+	{0x041B,0x39},
+	{0x041E,0x39},
+	{0x1C00,0xF5},
+	{0x1D00,0xF5},
+	{0x1E00,0xF5},
+	{0x1F00,0xF5},
+	*/
+	{0x08A2,0xF2},
+	{0x0943,0x00},
+	{0x0904,0x00},
+	{0x0944,0x00},
+};
+static const struct max96724_reg_list init_4_setting = {
+	.num_of_regs = ARRAY_SIZE(init_4),
+	.regs = init_4,
+};
+
+static const struct max96724_reg init_5[] = {
+	{0x08A0,0x84},//force output
+};
+static const struct max96724_reg_list init_5_setting = {
+	.num_of_regs = ARRAY_SIZE(init_5),
+	.regs = init_5,
+};
+
+//oms
 static const struct max96724_reg desay_init[] = {
 	{0x040B,0x00},
 	{0x0006,0xf2},
@@ -102,80 +200,11 @@ static const struct max96724_reg desay_init[] = {
 	{0x0415,0xaf},//vc1
 	{0x0411,0x08},//vc1
 	{0x041a,0x20},//vc1
-	
 
 	{0x0018,0x0f},
 };
 
 
-//oms
-/*
-static const struct max96724_reg desay_init[] = {
-	{0x0003,0xAA}, 
-	{0x0455,0x00},
-	{0x00F0,0x62},
-	{0x00F1,0xC8},
-	{0x00F4,0x0F},
-	{0x041A,0xC0},
-	{0x040B,0x00},
-	{0x040F,0x70},
-	{0x0410,0x7A},
-	{0x0411,0x40},
-	{0x0412,0x20},
-	{0x090B,0x07},
-	{0x092D,0x15},
-	{0x090D,0x2C},
-	{0x090E,0x2C},
-	{0x090F,0x00},
-	{0x0910,0x00},
-	{0x0911,0x01},
-	{0x0912,0x01},
-	{0x094B,0x07},
-	{0x096D,0x15},
-	{0x094D,0x2C},
-	{0x094E,0x6C},
-	{0x094F,0x00},
-	{0x0950,0x40},
-	{0x0951,0x01},
-	{0x0952,0x41},
-	{0x098B,0x07},
-	{0x09AD,0x15},
-	{0x098D,0x1E},
-	{0x098E,0x9E},
-	{0x098F,0x00},
-	{0x0990,0x80},
-	{0x0991,0x01},
-	{0x0992,0x81},
-	{0x09CB,0x07},
-	{0x09ED,0x15},
-	{0x09CD,0x1E},
-	{0x09CE,0xDE},
-	{0x09CF,0x00},
-	{0x09D0,0xC0},
-	{0x09D1,0x01},
-	{0x09D2,0xC1},
-	{0x08A0,0x04},
-	{0x08A3,0xE4},
-	{0x08A4,0xE4},
-	{0x090A,0xC0},
-	{0x094A,0xC0},
-	{0x098A,0xC0},
-	{0x09CA,0xC0},
-	{0x08A2,0x04},
-	{0x1C00,0xF4},
-	{0x1D00,0xF4},
-	{0x1E00,0xF4},
-	{0x1F00,0xF4},
-	{0x0415,0x39},
-	{0x0418,0xF9},
-	{0x041B,0x39},
-	{0x041E,0x39},
-	{0x1C00,0xF5},
-	{0x1D00,0xF5},
-	{0x1E00,0xF5},
-	{0x1F00,0xF5},
-};
-*/
 static const struct max96724_reg_list desay_init_setting = {
 	.num_of_regs = ARRAY_SIZE(desay_init),
 	.regs = desay_init,
@@ -248,160 +277,8 @@ static const struct max96724_reg_list desay_init_dms_setting = {
 	.regs = desay_init_dms,
 };
 
-/*
- * FSYNC_MODE 2b01 FSYNC_METH 2b00
- * 25Mhz XTAL, 30fps, TX_ID 8
- * OVLP window 0
- * enable fsync on pipe 1
- */
-static const struct max96724_reg fsync_30fps[] = {
-	{0x04a0, 0x04},
-	{0x04a2, 0x00},
-	{0x04aa, 0x00},
-	{0x04ab, 0x00},
-	{0x04af, 0xcf},
-	{0x04a7, 0x0c},
-	{0x04a6, 0xb7},
-	{0x04a5, 0x35},
-	{0x04b1, 0x40},
-};
-static const struct max96724_reg_list fsync_setting = {
-	.num_of_regs = ARRAY_SIZE(fsync_30fps),
-	.regs = fsync_30fps,
-};
-
-/*
- * disable CSI out
- * 2x4
- * 800MBps
- * 4lanes
- * DPHY auto initial deskew on
- * lanes swapped matches pin
- * enable PHY 0/1/2/3
- * write to 0x40b to enable csi out
- */
-static const struct max96724_reg csi_phy[] = {
-	{0x040b, 0x00},
-	{0x08a0, 0x04},
-	{0x08a3, 0xe4},
-	{0x094a, 0xc0},
-	{0x1d00, 0xf4},
-//	{0x0943, 0x80},
-	{0x0418, 0x28},
-	{0x1d00, 0xf5},
-	{0x08a2, 0xf0},
-};
-static const struct max96724_reg_list mipi_phy_setting = {
-	.num_of_regs = ARRAY_SIZE(csi_phy),
-	.regs = csi_phy,
-};
-
-/*
- * link a pipe z -> pipe 0
- * link b pipe z -> pipe 1
- * link c pipe z -> pipe 2
- * link d pipe z -> pipe 3
- * enable pipe 0/1/2/3
- */
-static const struct max96724_reg video_pipe_sel[] = {
-	{0x00f0, 0x62},
-	{0x00f1, 0xea},
-	{0x00f4, 0x0f},
-};
-static const struct max96724_reg_list video_pipe_setting = {
-	.num_of_regs = ARRAY_SIZE(video_pipe_sel),
-	.regs = video_pipe_sel,
-};
-
-/*
- * pipe 0 vc0
- * FS/DATA/FE identity mapping
- * to csi ctrl 1
- * pipe 1 vc1
- * FS/DATA/FE identity mapping
- * to csi ctrl 1
- * pipe 2 vc2
- * FS/DATA/FE identity mapping
- * to csi ctrl 1
- * pipe 3 vc3
- * FS/DATA/FE identity mapping
- * to csi ctrl 1
- */
-static const struct max96724_reg video_pipe_to_csi_ctrl_mapping[] = {
-	{0x090b, 0x07},
-	{0x090d, 0x00},
-	{0x090e, 0x00},
-	{0x090f, 0x1e},
-	{0x0910, 0x1e},
-	{0x0911, 0x01},
-	{0x0912, 0x01},
-	{0x092d, 0x15},
-	/* pipe 1 */
-	{0x094b, 0x07},
-	{0x094d, 0x00},
-	{0x094e, 0x40},
-	{0x094f, 0x1e},
-	{0x0950, 0x5e},
-	{0x0951, 0x01},
-	{0x0952, 0x41},
-	{0x096d, 0x15},
-	/* pipe 2 */
-	{0x098b, 0x07},
-	{0x098d, 0x00},
-	{0x098e, 0x80},
-	{0x098f, 0x1e},
-	{0x0990, 0x9e},
-	{0x0991, 0x01},
-	{0x0992, 0x81},
-	{0x09ad, 0x15},
-	/* pipe 3 */
-	{0x09cb, 0x07},
-	{0x09cd, 0x00},
-	{0x09ce, 0xc0},
-	{0x09cf, 0x1e},
-	{0x09d0, 0xde},
-	{0x09d1, 0x01},
-	{0x09d2, 0xc1},
-	{0x09ed, 0x15},
-};
-
-static const struct max96724_reg_list mipi_ctrl_setting = {
-	.num_of_regs = ARRAY_SIZE(video_pipe_to_csi_ctrl_mapping),
-	.regs = video_pipe_to_csi_ctrl_mapping,
-};
-
-/*
- * 2lanes
- * lane swapping
- * GPIO 8 fsync
- * Route YUV422 8bit to pipe
- * RLMS
- */
-static const struct max96724_reg link_abcd_default[] = {
-	/* disable local CC */
-//	{0x0001, 0xe4},
-	{0x0330, 0x00},
-	{0x0331, 0x11},
-	{0x0332, 0xE0},
-	{0x0333, 0x04},
-	{0x0318, 0x5E},
-	{0x02D6, 0x84},
-	{0x1417, 0x00},
-	{0x1432, 0x7F},
-};
-
 //oms, 9295a
 static const struct max96724_reg link_abcd_default_9295[] = {
-/*
-	{0x0100,0xF2},
-	{0x0101,0x4A},
-	{0x0002,0x13},
-	{0x0007,0x07},
-	{0x03F0,0x51},
-	{0x03F1,0x05},
-	{0x02D6,0x00},
-	{0x02C1,0x10},
-*/
 	{0x0100,0xF2},
 	{0x0101,0x4A},
 	{0x0002,0x13},
@@ -429,9 +306,21 @@ static const struct max96724_reg_list link_setting = {
 	.regs = link_abcd_default_9295,
 };
 
+//dms, 9295e
+static const struct max96724_reg_list link_setting_9295e = {
+	.num_of_regs = ARRAY_SIZE(link_abcd_default_9295_dms),
+	.regs = link_abcd_default_9295_dms,
+};
+
+//oms, 9295a
+static const struct max96724_reg_list link_setting_9295a = {
+	.num_of_regs = ARRAY_SIZE(link_abcd_default_9295),
+	.regs = link_abcd_default_9295,
+};
+
+
 static const s64 max96724_link_freq[] = {
-	400000000,
-	800000000,
+	750000000,
 };
 
 static void set_sub_stream_fmt(int index, u32 code)
@@ -545,6 +434,7 @@ static int max96724_write(struct max96724_priv *priv, u32 reg, u32 val)
 	return ret;
 }
 
+#if 0
 static int max96724_read_rem(struct max96724_priv *priv, u16 addr, u32 reg, u32 *val)
 {
 	int ret;
@@ -563,20 +453,25 @@ static int max96724_read_rem(struct max96724_priv *priv, u16 addr, u32 reg, u32 
 
 	return ret;
 }
+#endif
 
 static int max96724_write_rem(struct max96724_priv *priv, u16 addr, u32 reg, u32 val)
 {
-	int ret;
+	int ret = 0;
 	unsigned short addr_backup;
 
 	addr_backup = priv->client->addr;
 	priv->client->addr = addr;
+	dev_info(&priv->client->dev,
+			"%s : slv addr 0x%x register 0x%02x write 0x%x (%d)\n",
+			__func__, addr, reg, val, ret);
+
 	ret = regmap_write(priv->regmap16, reg, val);
 	priv->client->addr = addr_backup;
 
 	if (ret) {
 		dev_err(&priv->client->dev,
-				"%s : addr 0x%x register 0x%02x write failed (%d)\n",
+				"%s : slv addr 0x%x register 0x%02x write failed (%d)\n",
 				__func__, addr, reg, ret);
 	}
 
@@ -877,10 +772,10 @@ static int max96724_get_locked_status(struct max96724_priv *priv, int link)
 static int max96724_remote_init(struct max96724_priv *priv, int rx_port,
 		const struct max96724_reg_list *init_setting)
 {
-	u32 val;
+	//u32 val;
 	int ret;
 	unsigned short tmp_addr;
-	struct max9671x_subdev_info *info = &priv->platform_data->subdev_info[0];
+	struct max9671x_subdev_info *info = &priv->platform_data->subdev_info[rx_port];
 
 	ret = max96724_get_locked_status(priv, rx_port);
 
@@ -888,28 +783,25 @@ static int max96724_remote_init(struct max96724_priv *priv, int rx_port,
 		dev_info(&priv->client->dev, "link %d not locked\n", rx_port);
 		return -EIO;
 	}
+	max96724_write(priv, 0x03, 0xaa);
 
+	
+	dev_info(&priv->client->dev, "link status 0x%x\n", ~(1 << rx_port * 2));
 	max96724_write(priv, 0x03, ~(1 << rx_port * 2)); //just for a specific link (a,b,d,or d)
+	tmp_addr = info->alias_addr;
+	dev_info(&priv->client->dev, "tmp slave addr  0x%x, rx_port %d\n", tmp_addr, rx_port);
 
-	/* get current addr in use */
-	if (max96724_read_rem(priv, info->phy_i2c_addr, 0x10, &val))
-		tmp_addr = info->alias_addr;
-	else
-		tmp_addr = info->phy_i2c_addr;
-	/* reset */
-//	max96724_read_rem(priv, tmp_addr, 0x10, &val);
-//	max96724_write_rem(priv, tmp_addr, 0x10, val | 0x20);
-//	msleep(DELAY_MS);
 
 	/* assign new addr */
-//	max96724_write_rem(priv, info->phy_i2c_addr, 0x00,
-	max96724_write_rem(priv, tmp_addr, 0x00,
-			info->alias_addr << 1);
+	max96724_write_rem(priv, info->phy_i2c_addr, 0x00, info->alias_addr << 1);
+	//max96724_write_rem(priv, tmp_addr, 0x00,
+	//		info->alias_addr << 1);
 
 	/* initialize remote */
 	ret = max96724_write_rem_reg_list(priv, info->alias_addr, init_setting);
 
-	max96724_write(priv, 0x03, 0xff);
+	//max96724_write(priv, 0x03, 0xff);
+	max96724_write(priv, 0x03, 0xaa);
 
 	return ret;
 }
@@ -941,24 +833,26 @@ static int max96724_s_ctrl(struct v4l2_ctrl *ctrl)
 
 	switch (ctrl->id) {
 	case  V4L2_CID_IPU_SET_SUB_STREAM:
+		
 		val = (*ctrl->p_new.p_s64 & 0xffff);
 		vc_id = (val >> 8) & 0xff;
 		state = val & 0xff;
 
 		max96724_set_sub_stream[vc_id] = state;
+
+		dev_info(&client->dev, "%s : V4L2_CID_IPU_SET_SUB_STREAM vc = %d, state = %d\n",
+			__func__, vc_id, state);
+
 		ret = max96724_s_stream_vc(priv, vc_id, state);
+
 		break;
 	case V4L2_CID_RESET_LINKA:
-		ret = max96724_remote_init(priv, MAX_PORT_SIOA, &link_setting);
 		break;
 	case V4L2_CID_RESET_LINKB:
-		ret = max96724_remote_init(priv, MAX_PORT_SIOB, &link_setting);
 		break;
 	case V4L2_CID_RESET_LINKC:
-		ret = max96724_remote_init(priv, MAX_PORT_SIOC, &link_setting);
 		break;
 	case V4L2_CID_RESET_LINKD:
-		ret = max96724_remote_init(priv, MAX_PORT_SIOD, &link_setting);
 		break;
 	default:
 		dev_info(&client->dev, "%s : v4l2 control id 0x%x\n", __func__, ctrl->id);
@@ -1147,10 +1041,13 @@ static int max96724_init(struct max96724_priv *priv)
 {
 	int ret;
 	unsigned int val;
-	unsigned short tmp_addr;
+	//unsigned short tmp_addr = 0;
 	struct max9671x_platform_data *pdata = priv->platform_data;
-	struct max9671x_subdev_info *info = &pdata->subdev_info[0];
+	//struct max9671x_subdev_info *info = &pdata->subdev_info[0];
+	int sd_size = pdata->subdev_num;
 
+	dev_info(&priv->client->dev, "there are %d sub-device on this des. \n",sd_size);
+	
 	/* FIXME: need external method to resolve conflict address */
 	max96724_write(priv, 0x03, 0xff);
 	//max96724_write_rem(priv, 0x27, 0x01, 0x11);
@@ -1204,28 +1101,18 @@ static int max96724_init(struct max96724_priv *priv)
 		return -ENXIO;
 	}
 
-	/* enable rem cc */
-	max96724_write(priv, 0x03, 0xaa);
+	for (int i = 0; i < 2; i++) { //FIXME, hard code, there are 2 ser connected to max96724, link_a and link_b 
 
-	/* get current addr in use */
-	if (max96724_read_rem(priv, info->phy_i2c_addr, 0x10, &val))
-		tmp_addr = info->alias_addr;
-	else
-		tmp_addr = info->phy_i2c_addr;
-
-	max96724_read_rem(priv, tmp_addr, 0xd, &val);
-	dev_info(&priv->client->dev, "ser dev id is 0x%x, slave addr is 0x%x\n",val, tmp_addr);
-
-	/* broadcast to all connected remote */
-	ret = max96724_write_rem(priv, tmp_addr,
-			0x00, info->alias_addr << 1);
-	if (ret)
-		return ret;
-
-	ret = max96724_write_rem_reg_list(priv, info->alias_addr,
-			&link_setting);
-	if (ret)
-		return ret;
+		//max96724_write(priv, 0x03, 0xaa);
+		if (i == MAX_PORT_SIOA) {
+			ret = max96724_remote_init(priv, i, &link_setting_9295e);
+		}
+		else if (i == MAX_PORT_SIOB) {
+			ret = max96724_remote_init(priv, i, &link_setting_9295a);
+		}
+		if (ret)
+			return ret;
+	}
 
 	/* disnable all CC and reset */
 	max96724_write(priv, 0x03, 0xff);
@@ -1241,23 +1128,18 @@ static int max96724_init(struct max96724_priv *priv)
 		return -ENXIO;
 	}
 
-#if 0
-	/* FSYNC */
-	ret = max96724_write_reg_list(priv, &fsync_setting);
-
-	/* CFGH {A/B/C/D} VIDEO {X/Y/Z/U} */
-	/* VIDEO PIPE SEL */
-	ret = max96724_write_reg_list(priv, &video_pipe_setting);
-
-	/* MIPI TX */
-	ret = max96724_write_reg_list(priv, &mipi_ctrl_setting);
-
-	/* MIPI PHY */
-	ret = max96724_write_reg_list(priv, &mipi_phy_setting);
-#endif
-	ret = max96724_write_reg_list(priv, &desay_init_setting);
+	//ret = max96724_write_reg_list(priv, &desay_init_setting);
 	//ret = max96724_write_reg_list(priv, &desay_init_dms_setting);
-	msleep(200);
+	ret = max96724_write_reg_list(priv, &init_1_setting);
+	msleep(100);
+	ret = max96724_write_reg_list(priv, &init_2_setting);
+	msleep(100);
+	ret = max96724_write_reg_list(priv, &init_3_setting);
+	msleep(100);
+	ret = max96724_write_reg_list(priv, &init_4_setting);
+	msleep(100);
+	ret = max96724_write_reg_list(priv, &init_5_setting);
+	msleep(100);
 	max96724_write(priv, 0x40b, 0x02);
 	return 0;
 }

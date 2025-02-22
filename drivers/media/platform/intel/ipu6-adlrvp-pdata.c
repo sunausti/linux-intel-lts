@@ -745,7 +745,7 @@ static struct max9671x_subdev_info max96724_subdevs[] = {
 		/* GPP_B23	- 0 + 664*/
 		//.power_gpio = 687,
 		.phy_i2c_addr = 0x40,
-		.alias_addr = 0x40,
+		.alias_addr = 0x45,
 		.ser_type = MAX_SER_96717F,
 		.suffix = 'a',
 	},
@@ -759,7 +759,7 @@ static struct max9671x_subdev_info max96724_subdevs[] = {
 		/* GPP_B23	- 0 + 664*/
 		//.power_gpio = 687,
 		.phy_i2c_addr = 0x40,
-		.alias_addr = 0x40,
+		.alias_addr = 0x46,
 		.ser_type = MAX_SER_96717F,
 		.suffix = 'b',
 	},
@@ -773,7 +773,7 @@ static struct max9671x_subdev_info max96724_subdevs[] = {
 		/* GPP_B23	- 0 + 664*/
 		//.power_gpio = 687,
 		.phy_i2c_addr = 0x40,
-		.alias_addr = 0x40,
+		.alias_addr = 0x47,
 		.ser_type = MAX_SER_96717F,
 		.suffix = 'c',
 	},
@@ -787,7 +787,7 @@ static struct max9671x_subdev_info max96724_subdevs[] = {
 		/* GPP_B23	- 0 + 664*/
 		//.power_gpio = 687,
 		.phy_i2c_addr = 0x40,
-		.alias_addr = 0x40,
+		.alias_addr = 0x48,
 		.ser_type = MAX_SER_96717F,
 		.suffix = 'd',
 	},
@@ -1081,7 +1081,7 @@ static struct ipu_isys_subdev_pdata pdata = {
 
 static void ipu6_quirk(struct pci_dev *pci_dev)
 {
-	dev_info(&pci_dev->dev, "%s() attach the platform data ===========", __func__);
+	dev_info(&pci_dev->dev, "%s() attach the platform data =========== 2025-02-22", __func__);
 	pci_dev->dev.platform_data = &pdata;
 }
 
