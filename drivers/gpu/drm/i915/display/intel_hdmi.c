@@ -2464,6 +2464,7 @@ intel_hdmi_set_edid(struct drm_connector *connector)
 
 	i2c = intel_gmbus_get_adapter(dev_priv, intel_hdmi->ddc_bus);
 
+#if 0
 	drm_edid = drm_edid_read_ddc(connector, i2c);
 
 	if (!drm_edid && !intel_gmbus_is_forced_bit(i2c)) {
@@ -2473,6 +2474,10 @@ intel_hdmi_set_edid(struct drm_connector *connector)
 		drm_edid = drm_edid_read_ddc(connector, i2c);
 		intel_gmbus_force_bit(i2c, false);
 	}
+#else
+	drm_edid_override_connector_update(connector);
+	drm_edid =  connector->edid_override;
+#endif
 
 	/* Below we depend on display info having been updated */
 	drm_edid_connector_update(connector, drm_edid);
