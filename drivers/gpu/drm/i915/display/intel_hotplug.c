@@ -22,17 +22,12 @@
  */
 
 #include <linux/kernel.h>
-#include <linux/interrupt.h>
-#include <linux/gpio.h>
-#include <linux/gpio/machine.h>
-#include <linux/gpio/consumer.h>
 
 #include "i915_drv.h"
 #include "i915_irq.h"
 #include "intel_display_types.h"
 #include "intel_hotplug.h"
 #include "intel_hotplug_irq.h"
-#include "intel_acpi.h"
 
 /**
  * DOC: Hotplug
@@ -589,171 +584,6 @@ void intel_hpd_irq_handler(struct drm_i915_private *dev_priv,
 				   &dev_priv->display.hotplug.hotplug_work, 0);
 }
 
-static enum hrtimer_restart __hpd_pulse_watchdog(struct hrtimer *hrtimer)
-{
-	struct hpd_gpio *hpd_gpio = container_of(hrtimer, struct hpd_gpio, timer);
-	struct drm_i915_private *i915 = hpd_gpio->i915;
-	u32 pin_mask = 0, long_mask = 0;
-	int value;
-
-	value = gpiod_get_value(hpd_gpio->gpiod);
-	dev_dbg(i915->drm.dev, "pin:%d, val(%d)\n", hpd_gpio->pin, value);
-	if (value)
-		return HRTIMER_NORESTART;
-
-	pin_mask = BIT(hpd_gpio->pin);
-	long_mask = BIT(hpd_gpio->pin);
-	intel_hpd_irq_handler(hpd_gpio->i915, pin_mask, long_mask);
-	return HRTIMER_NORESTART;
-}
-
-static irqreturn_t intel_hpd_gpio_handler(int irq, void *data)
-{
-	struct drm_i915_private *i915 = data;
-	struct intel_hotplug *hotplug = &i915->display.hotplug;
-	u32 pin_mask = 0, long_mask = 0;
-	enum hpd_pin pin = HPD_NONE;
-	int value;
-	struct gpio_desc *gpiod;
-	struct hpd_gpio *gpio_pin;
-	u32 pch_isr;
-	u64 time_diff, expires;
-
-	for (pin = 0; pin < HPD_NUM_PINS; ++pin) {
-		gpio_pin = &hotplug->stats[pin].gpio;
-		if (gpio_pin->irq == irq)
-			break;
-	}
-
-	if (pin == HPD_NONE) {
-		dev_warn(i915->drm.dev, "Unknown HPD GPIO IRQ number %d\n", irq);
-		return IRQ_HANDLED;
-	}
-
-	gpiod = gpio_pin->gpiod;
-	pch_isr = gpio_pin->pch_isr;
-	value = gpiod_get_value(gpiod);
-	dev_dbg(i915->drm.dev, "Handling HPD GPIO pin: %d,val(%d)\n", pin, value);
-	if (value) {
-		spin_lock(&i915->irq_lock);
-		hotplug->gpio_pch_isr |= pch_isr;
-		spin_unlock(&i915->irq_lock);
-		pin_mask = BIT(pin);
-		time_diff = ktime_get_mono_fast_ns() - gpio_pin->timestamp_ns;
-		if (time_diff >= 2 * NSEC_PER_MSEC) /* 2ms */
-			long_mask = BIT(pin);
-
-		if (hotplug->stats[pin].state == HPD_DISABLED)
-			hotplug->stats[pin].state = HPD_ENABLED;
-
-		intel_hpd_irq_handler(i915, pin_mask, long_mask);
-		gpio_pin->timestamp_ns = 0L;
-	} else {
-		spin_lock(&i915->irq_lock);
-		hotplug->gpio_pch_isr &= ~pch_isr;
-		spin_unlock(&i915->irq_lock);
-		gpio_pin->timestamp_ns = ktime_get_mono_fast_ns();
-		expires = ktime_get_mono_fast_ns() + (u64)2 * NSEC_PER_MSEC;
-		hrtimer_start(&gpio_pin->timer, expires, HRTIMER_MODE_ABS);
-	}
-
-	return IRQ_HANDLED;
-}
-
-void intel_acpi_hpd_gpio_register(struct drm_i915_private *i915)
-{
-	struct intel_hotplug *hotplug = &i915->display.hotplug;
-	struct hpd_gpio *hpd_gpio;
-	enum hpd_pin pin;
-	int ret = 0, val;
-
-	hotplug->gpio_hpd_count = 0;
-
-	intel_acpi_video_parse_crs(i915);
-
-	if (!hotplug->gpio_hpd_count)
-		return;
-
-	for_each_hpd_pin(pin) {
-		hpd_gpio = &hotplug->stats[pin].gpio;
-		if (!hpd_gpio->gpiod)
-			continue;
-
-		val = gpiod_get_value(hpd_gpio->gpiod);
-		if (val)
-			hotplug->gpio_pch_isr |= hpd_gpio->pch_isr;
-
-		ret = request_irq(hpd_gpio->irq, intel_hpd_gpio_handler,
-				IRQF_TRIGGER_RISING | IRQF_TRIGGER_FALLING,
-				"i915-hpd-gpio", i915);
-		if (ret) {
-			dev_warn(i915->drm.dev,
-				"Failed to install IRQ handler for HPD PIN %d\n", pin);
-			gpio_free(desc_to_gpio(hpd_gpio->gpiod));
-			hpd_gpio->gpiod = NULL;
-			hpd_gpio->irq = IRQ_NOTCONNECTED;
-			hotplug->gpio_hpd_count--;
-			continue;
-		}
-		dev_info(i915->drm.dev,"IRQ %d for HPD PIN %d registered successfully\n",
-			hpd_gpio->irq, pin);
-		hpd_gpio->pin = pin;
-		hpd_gpio->i915 = i915;
-		hrtimer_init(&hpd_gpio->timer, CLOCK_MONOTONIC, HRTIMER_MODE_ABS);
-		hpd_gpio->timer.function = __hpd_pulse_watchdog;
-	}
-}
-
-static void intel_hpd_gpio_register(struct drm_i915_private *i915)
-{
-	struct intel_hotplug *hotplug = &i915->display.hotplug;
-	struct hpd_gpio *hpd_gpio;
-	enum hpd_pin pin;
-	int val;
-
-	if (!hotplug->gpio_hpd_count)
-		return;
-
-	for_each_hpd_pin(pin) {
-		hpd_gpio = &hotplug->stats[pin].gpio;
-		if (!hpd_gpio->gpiod)
-			continue;
-
-		val = gpiod_get_value(hpd_gpio->gpiod);
-		if (val)
-			hotplug->gpio_pch_isr |= hpd_gpio->pch_isr;
-
-		dev_dbg(i915->drm.dev, "pin(%d)->val(%d)\n", pin, val);
-	}
-}
-
-void intel_acpi_hpd_gpio_unregister(struct drm_i915_private *dev_priv)
-{
-	struct intel_hotplug *hotplug = &dev_priv->display.hotplug;
-	struct hpd_gpio *hpd_gpio;
-	enum hpd_pin i;
-
-	if (!hotplug->gpio_hpd_count)
-		return;
-
-	dev_dbg(dev_priv->drm.dev, "Starting to remove HPD GPIO IRQs\n");
-
-	for_each_hpd_pin(i) {
-		hpd_gpio = &hotplug->stats[i].gpio;
-		if (hpd_gpio->gpiod) {
-			if (free_irq(hpd_gpio->irq, dev_priv) == NULL) {
-				dev_warn(dev_priv->drm.dev, "Failed to free IRQ %d\n",
-					hpd_gpio->irq);
-				continue;
-			}
-			hpd_gpio->gpiod = NULL;
-			hpd_gpio->irq = IRQ_NOTCONNECTED;
-			hpd_gpio->pch_isr = 0;
-		}
-	}
-	hotplug->gpio_pch_isr = 0;
-}
-
 /**
  * intel_hpd_init - initializes and enables hpd support
  * @dev_priv: i915 device instance
@@ -787,8 +617,6 @@ void intel_hpd_init(struct drm_i915_private *dev_priv)
 	spin_lock_irq(&dev_priv->irq_lock);
 	intel_hpd_irq_setup(dev_priv);
 	spin_unlock_irq(&dev_priv->irq_lock);
-
-	intel_hpd_gpio_register(dev_priv);
 }
 
 static void i915_hpd_poll_init_work(struct work_struct *work)

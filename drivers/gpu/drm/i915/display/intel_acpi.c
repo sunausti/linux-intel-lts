@@ -12,9 +12,6 @@
 #include "i915_drv.h"
 #include "intel_acpi.h"
 #include "intel_display_types.h"
-#include <linux/gpio.h>
-#include <linux/gpio/machine.h>
-#include <linux/gpio/consumer.h>
 
 #define INTEL_DSM_REVISION_ID 1 /* For Calpella anyway... */
 #define INTEL_DSM_FN_PLATFORM_MUX_INFO 1 /* No args */
@@ -335,90 +332,6 @@ void intel_acpi_assign_connector_fwnodes(struct drm_i915_private *i915)
 	 */
 	fwnode_handle_put(fwnode);
 }
-
-static int intel_acpi_video_handle_gpio(struct acpi_resource *ares, void *data)
-{
-	struct drm_i915_private *i915 = (struct drm_i915_private *)data;
-	struct drm_device *drm_dev = &i915->drm;
-	struct acpi_device *acpi_device =ACPI_COMPANION(drm_dev->dev);
-	struct acpi_resource_gpio *ares_gpio = &ares->data.gpio;
-	struct intel_hotplug *hotplug = &i915->display.hotplug;
-	struct hpd_gpio *hpd_gpio;
-	struct gpio_desc *gpio_desc;
-	enum hpd_pin hpd_pin;
-	u16 gpio_pin;
-	int irq;
-
-	if (ares->type != ACPI_RESOURCE_TYPE_GPIO)
-		return 0;
-
-	if (ares_gpio->connection_type != ACPI_RESOURCE_GPIO_TYPE_INT)
-		return 0;
-
-	gpio_pin = ares_gpio->pin_table[0];
-	hpd_pin = ares_gpio->vendor_data[0];
-	dev_info(&acpi_device->dev,
-		"ACPI HPD GPIO entry: gpio_pin(%d) for hpd_pin(%d)\n",
-		gpio_pin, hpd_pin);
-
-	if (hpd_pin < HPD_PORT_A || hpd_pin >= HPD_NUM_PINS) {
-		dev_warn(&acpi_device->dev, "Invalid HPD PIN %d for GPIO PIN %d\n",
-			hpd_pin, gpio_pin);
-		return 1;
-	}
-
-	gpio_desc = acpi_get_and_request_gpiod(
-		ares_gpio->resource_source.string_ptr, gpio_pin, NULL);
-	if (IS_ERR(gpio_desc)) {
-		dev_warn(i915->drm.dev,
-			"Failed to get GPIO DESC for GPIO PIN %d\n", gpio_pin);
-		return 1;
-	}
-
-	irq = acpi_dev_gpio_irq_get(acpi_device, hotplug->gpio_hpd_count);
-	if (irq < 0) {
-		dev_warn(&acpi_device->dev, "Failed to get IRQ for pin %d\n", gpio_pin);
-		gpio_free(gpio_pin);
-		return 1;
-	}
-
-	hpd_gpio = &hotplug->stats[hpd_pin].gpio;
-	hpd_gpio->gpiod = gpio_desc;
-	hpd_gpio->irq = irq;
-	hotplug->gpio_hpd_count++;
-
-	if (hpd_pin >= HPD_PORT_TC1)
-		hpd_gpio->pch_isr = SDE_TC_HOTPLUG_ICP(hpd_pin);
-	else
-		hpd_gpio->pch_isr = SDE_DDI_HOTPLUG_ICP(hpd_pin);
-
-	dev_info(&acpi_device->dev,
-		"ACPI HPD GPIO entry handled: gpio_pin(%d) for hpd_pin(%d) with IRQ %d\n",
-		gpio_pin, hpd_pin, irq);
-
-	return 0;
-}
-
-void intel_acpi_video_parse_crs(struct drm_i915_private *i915)
-{
-	struct drm_device *drm_dev = &i915->drm;
-	struct acpi_device *acpi_device =ACPI_COMPANION(drm_dev->dev);
-	LIST_HEAD(resources);
-	int ret;
-
-	if (!acpi_device)
-		return;
-
-	ret = acpi_dev_get_resources(acpi_device, &resources,
-		intel_acpi_video_handle_gpio, i915);
-	if (ret < 0) {
-		dev_err(&acpi_device->dev, "Error getting ACPI resources: %d\n", ret);
-		return;
-	}
-
-	acpi_dev_free_resource_list(&resources);
-}
-
 
 void intel_acpi_video_register(struct drm_i915_private *i915)
 {
