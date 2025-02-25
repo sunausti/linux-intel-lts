@@ -786,7 +786,7 @@ static int max96724_remote_init(struct max96724_priv *priv, int rx_port,
 	max96724_write(priv, 0x03, 0xaa);
 
 	
-	dev_info(&priv->client->dev, "link status 0x%x\n", ~(1 << rx_port * 2));
+	dev_info(&priv->client->dev, "link mask 0x%x\n", ~(1 << rx_port * 2));
 	max96724_write(priv, 0x03, ~(1 << rx_port * 2)); //just for a specific link (a,b,d,or d)
 	tmp_addr = info->alias_addr;
 	dev_info(&priv->client->dev, "tmp slave addr  0x%x, rx_port %d\n", tmp_addr, rx_port);
@@ -1101,17 +1101,18 @@ static int max96724_init(struct max96724_priv *priv)
 		return -ENXIO;
 	}
 
-	for (int i = 0; i < 2; i++) { //FIXME, hard code, there are 2 ser connected to max96724, link_a and link_b 
-
-		//max96724_write(priv, 0x03, 0xaa);
-		if (i == MAX_PORT_SIOA) {
-			ret = max96724_remote_init(priv, i, &link_setting_9295e);
+	for (int i = 0; i < sd_size; i++) {
+		if (priv->source_mask & (1 << i)) {
+			//max96724_write(priv, 0x03, 0xaa);
+			if (i == MAX_PORT_SIOA) {
+				ret = max96724_remote_init(priv, i, &link_setting_9295e);
+			}
+			else if (i == MAX_PORT_SIOB) {
+				ret = max96724_remote_init(priv, i, &link_setting_9295a);
+			}
+			if (ret)
+				return ret;
 		}
-		else if (i == MAX_PORT_SIOB) {
-			ret = max96724_remote_init(priv, i, &link_setting_9295a);
-		}
-		if (ret)
-			return ret;
 	}
 
 	/* disnable all CC and reset */
